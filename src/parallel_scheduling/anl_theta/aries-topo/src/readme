@@ -1,0 +1,5 @@
+for I in 16 32 64 256 512 1024 2048;  do sed -e "s/1200/${I}/g" cobalt-script.sh > cobalt-script-${I}.sh ; done
+
+for I in 16 32 64 256 512 1024 2048;  do qsub cobalt-script-${I}.sh ; done
+
+export MPICH_GNI_ROUTING_MODE=NMIN_HASH
