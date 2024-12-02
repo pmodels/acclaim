@@ -6,7 +6,7 @@ import numpy as np
 
 #This function finds all algorithms and returns in an enumerated dictionary
 def read_algs(collective):
-  root_path = os.environ.get('ROOT')
+  root_path = os.environ.get('ACCLAIM_ROOT')
   algs_path = root_path + '/utils/mpich/algorithm_config/all_algs.csv'
 
   with open(algs_path) as csv_file:

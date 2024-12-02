@@ -1,0 +1,86 @@
+ALLGATHER:
+  MPIR_Allgather_intra_brucks
+  MPIR_Allgather_intra_recursive_doubling
+  MPIR_Allgather_intra_ring
+  Parameters:
+    None
+
+ALLREDUCE:
+  MPIR_Allreduce_intra_recursive_doubling
+  MPIR_Allreduce_intra_smp
+  MPIR_Allreduce_intra_reduce_scatter_allgather
+  Parameters:
+    None
+
+ALLTOALL:
+  MPIR_Alltoall_intra_scattered
+  MPIR_Alltoall_intra_pairwise_sendrecv_replace
+  MPIR_Alltoall_intra_brucks
+  MPIR_Alltoall_intra_pairwise
+  Parameters:
+    MPIR_CVAR_ALLTOALL_THROTTLE
+
+BARRIER:
+  MPIR_Barrier_intra_dissemination
+  MPIR_Barrier_intra_smp
+  Parameters:
+    None
+
+BCAST:
+  MPIR_Bcast_intra_smp
+  MPIR_Bcast_intra_scatter_recursive_doubling_allgather
+  MPIR_Bcast_intra_binomial
+  MPIR_Bcast_intra_scatter_ring_allgather
+  Parameters:
+    MPIR_CVAR_BCAST_INTRANODE_BUFFER_TOTAL_SIZE
+    MPIR_CVAR_BCAST_INTRANODE_NUM_CELLS
+    MPIR_CVAR_BCAST_INTRANODE_TREE_KVAL
+    MPIR_CVAR_BCAST_INTRANODE_TREE_TYPE
+
+EXSCAN:
+  MPIR_Exscan_intra_recursive_doubling
+  Parameters:
+    None
+
+GATHER:
+  MPIR_Gather_intra_binomial
+  Parameters:
+    None
+
+REDUCE:
+  MPIR_Reduce_intra_binomial
+  MPIR_Reduce_intra_smp
+  MPIR_Reduce_intra_reduce_scatter_gather
+  Parameters:
+    MPIR_CVAR_REDUCE_INTRANODE_BUFFER_TOTAL_SIZE
+    MPIR_CVAR_REDUCE_INTRANODE_NUM_CELLS
+    MPIR_CVAR_REDUCE_INTRANODE_TREE_KVAL
+    MPIR_CVAR_REDUCE_INTRANODE_TREE_TYPE
+
+REDUCE_SCATTER:
+  MPIR_Reduce_scatter_intra_recursive_doubling
+  MPIR_Reduce_scatter_intra_recursive_halving
+  MPIR_Reduce_scatter_intra_noncommutative
+  MPIR_Reduce_scatter_intra_pairwise
+  Parameters:
+    None
+
+REDUCE_SCATTER_BLOCK:
+  MPIR_Reduce_scatter_block_intra_noncommutative
+  MPIR_Reduce_scatter_block_intra_pairwise
+  MPIR_Reduce_scatter_block_intra_recursive_halving
+  MPIR_Reduce_scatter_block_intra_recursive_doubling
+  Parameters:
+    None
+
+SCAN:
+  MPIR_Scan_intra_smp
+  MPIR_Scan_intra_recursive_doubling
+  Parameters:
+    None
+
+SCATTER:
+  MPIR_Scatter_intra_binomial
+  Parameters:
+    None
+

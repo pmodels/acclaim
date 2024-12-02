@@ -65,7 +65,7 @@ def collect_point_batch(name, algs, points, parallel=0, topo=None):
 
   elif(parallel):
     parallel_batch_inputs = []
-    root_path = os.environ.get('ROOT')
+    root_path = os.environ.get('ACCLAIM_ROOT')
     while i < num_results:
       row = points[i,:]
       n = 2 ** (row[0] - 1)

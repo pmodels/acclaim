@@ -8,7 +8,7 @@ from collections import OrderedDict
 
 #This function reads the original/generic .json file currently used in MPICH and returns it as a mutable Python object (nested dictionaries)
 def read_generic_json_file():
-  root_path = os.environ.get('ROOT')
+  root_path = os.environ.get('ACCLAIM_ROOT')
   json_path = root_path + '/utils/mpich/algorithm_config/generic.json'
   with open(json_path) as json_file:
     json_file_data = json.load(json_file)
