@@ -2,6 +2,7 @@
 
 import os
 import subprocess
+from src.user_config.config_manager import ConfigManager
 
 #This class defines the topology data structure for ANL Theta
 class Topology:
@@ -150,7 +151,7 @@ def get_node_name_from_line(line):
 
 #This function generates the topology file for the current job/allocation and returns a path to the file
 def gen_topology(n):
-    root_path = os.environ.get('ACCLAIM_ROOT')
+    root_path = ConfigManager.get_instance().get_value('settings', 'acclaim_root')
     topo_test_path = root_path + '/fact/src/parallel_scheduling/anl_theta/aries-topo/src/test'
     with open("topo.out", "w") as f:
       subprocess.run(["aprun", "-n", str(n), topo_test_path], stdout=f)

@@ -4,11 +4,12 @@ import os
 import json
 import numpy as np
 from src.active_learner.algs import read_algs, add_algs
+from src.user_config.config_manager import ConfigManager
 from collections import OrderedDict
 
 #This function reads the original/generic .json file currently used in MPICH and returns it as a mutable Python object (nested dictionaries)
 def read_generic_json_file():
-  root_path = os.environ.get('ACCLAIM_ROOT')
+  root_path = ConfigManager.get_instance().get_value('settings', 'acclaim_root')
   json_path = root_path + '/utils/mpich/algorithm_config/generic.json'
   with open(json_path) as json_file:
     json_file_data = json.load(json_file)

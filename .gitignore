@@ -4,6 +4,7 @@
 
 # Project-specific things
 ENV
+config.ini
 src/parallel_scheduling/anl_theta/aries-topo/src/scripts
 src/parallel_scheduling/anl_theta/aries-topo/src/main
 *.json

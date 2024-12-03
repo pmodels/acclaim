@@ -15,6 +15,7 @@ import sys
 import os
 import glob
 from src.parallel_scheduling.anl_polaris.anl_polaris_parallel_scheduling import Topology, create_nodefile
+from src.user_config.config_manager import ConfigManager
 
 # This function uses a Python subprocess to run the benchmark script 
 def collect_point(name, alg, n, ppn, msg_size):
@@ -65,7 +66,7 @@ def collect_point_batch(name, algs, points, parallel=0, topo=None):
 
   elif(parallel):
     parallel_batch_inputs = []
-    root_path = os.environ.get('ACCLAIM_ROOT')
+    root_path = ConfigManager.get_instance().get_value('settings', 'acclaim_root')
     while i < num_results:
       row = points[i,:]
       n = 2 ** (row[0] - 1)

@@ -3,10 +3,11 @@
 import os
 import csv
 import numpy as np
+from src.user_config.config_manager import ConfigManager
 
 #This function finds all algorithms and returns in an enumerated dictionary
 def read_algs(collective):
-  root_path = os.environ.get('ACCLAIM_ROOT')
+  root_path = ConfigManager.get_instance().get_value('settings', 'acclaim_root')
   algs_path = root_path + '/utils/mpich/algorithm_config/all_algs.csv'
 
   with open(algs_path) as csv_file:

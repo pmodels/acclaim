@@ -1,5 +1,4 @@
 # This file performs active learning using jackknife variance
-#   
 
 import numpy as np
 from sklearn.ensemble import RandomForestRegressor
