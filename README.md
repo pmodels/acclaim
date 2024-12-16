@@ -7,7 +7,7 @@ The goal of ACCLAiM is to transparently improve the performance of large-scale H
 
 * Python3 (Tested with v3.13)
 	* For specific packages, see Setup
-* MPICH (Tested with v4.3.0) 
+* [MPICH](https://github.com/pmodels/mpich) (Tested with v4.3.0) 
   * For install instructions, see the MPICH README
 
 ## Setup
