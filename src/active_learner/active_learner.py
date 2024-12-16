@@ -1,7 +1,7 @@
 # This file performs active learning using jackknife variance
 
-import numpy as np
-from sklearn.ensemble import RandomForestRegressor
+import numpy as np # type: ignore
+from sklearn.ensemble import RandomForestRegressor # type: ignore
 
 from src.active_learner.utils import preprocess_features, unprocess_features
 from src.active_learner.initialization import create_feature_space, get_initial_points
@@ -11,12 +11,9 @@ from src.active_learner.data_collect import collect_point_batch
 from src.active_learner.normalizations import normalize_output, undo_normalize_output, undo_preprocess_input
 from src.active_learner.jackknife import jackknife
 from src.active_learner.convergence import convergence_criteria
-from src.parallel_scheduling.anl_theta.anl_theta_parallel_scheduling import Topology, gen_topology, get_topology
+from src.user_config.config_manager import ConfigManager
 
-#Our target machine, Theta, schedules based on nodes not processes. Therefore, the hardware has a constant number of ppn regardless of what we are testing
-MACHINE_PPN = 64
-
-def train_model(n, ppn, msg_size, collective, min_reps=10, theta=0):
+def train_model(n, ppn, msg_size, collective, min_reps=10):
 
   #Preprocess the input values and generate the feature space
   new_n, new_ppn, new_msg_size = preprocess_features(n, ppn, msg_size)
@@ -37,9 +34,10 @@ def train_model(n, ppn, msg_size, collective, min_reps=10, theta=0):
   rf = None
     
   #initialize topology
-  num_processes=n*MACHINE_PPN
-  topo_file = gen_topology(num_processes)
-  topo = get_topology(topo_file)
+  num_processes=n*ConfigManager.get_instance().get_value('settings', 'max_ppn')
+  dummy_topo_instance = ConfigManager.get_instance().get_topology()
+  topo_file = dummy_topo_instance.gen_topology_file(num_processes)
+  topo = dummy_topo_instance.get_topology(topo_file)
 
   ######################################################
   #
@@ -63,7 +61,7 @@ def train_model(n, ppn, msg_size, collective, min_reps=10, theta=0):
       print("Done initializing")
 
       #Collect the data
-      new_points_y = collect_point_batch(collective, algs, X_train, theta, topo)
+      new_points_y = collect_point_batch(collective, algs, X_train, topo)
 
       print("Done collecting first data")
 
@@ -85,7 +83,7 @@ def train_model(n, ppn, msg_size, collective, min_reps=10, theta=0):
       X_train = np.vstack([X_train, new_points_x])
 
       #Collect the data
-      new_points_y = collect_point_batch(collective, algs, new_points_x, theta, topo)
+      new_points_y = collect_point_batch(collective, algs, new_points_x, topo)
      
       #Process the results, append to y_train/y_train_nf
       new_y_train, new_y_train_nf = normalize_output(new_points_y, len(algs.keys()), norm_type="alg")

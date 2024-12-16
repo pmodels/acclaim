@@ -1,5 +1,4 @@
-#This file generates a config file by autotuning all "interesting" collectives
-#Interesting = non-variable, blocking collectives that have more than one implementation in MPICH
+#This file generates a config file by autotuning a single collective
 
 import sys
 import json
@@ -15,10 +14,10 @@ def main():
   save_file = str(sys.argv[5])
   json_file_data = read_generic_json_file()
 
-  feature_space, rf = train_model(n, ppn, msg_size, collective, theta=1)
+  feature_space, rf = train_model(n, ppn, msg_size, collective)
   json_file_data = update_collective(json_file_data, collective, feature_space, rf)
 
-  with open(save_file, 'w') as f:
+  with open(save_file, 'w+') as f:
     json.dump(json_file_data, f, indent=2)
 
   

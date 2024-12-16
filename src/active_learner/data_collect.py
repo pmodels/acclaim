@@ -8,74 +8,68 @@
 #   $5 = Message size
 
 import itertools
-import numpy as np
+import numpy as np #type: ignore
 import subprocess
 import multiprocessing
 import sys
 import os
 import glob
-from src.parallel_scheduling.anl_polaris.anl_polaris_parallel_scheduling import Topology, create_nodefile
 from src.user_config.config_manager import ConfigManager
 
+
 # This function uses a Python subprocess to run the benchmark script 
-def collect_point(name, alg, n, ppn, msg_size):
-  #print(name, alg, n, ppn, msg_size)
+def collect_point(name, alg, n, ppn, msg_size, nodefile=None):
   n = int(n)
   ppn = int(ppn)
   msg_size = int(msg_size)
-  print("Lower-level collecting point:",name,alg,n,ppn,msg_size)
-  result = subprocess.run(["./src/active_learner/collect_point_single.sh", name, alg, str(n), str(ppn), str(msg_size)], check=True, capture_output=True, text=True).stdout
+  result = subprocess.run(["./src/active_learner/collect_point_single.sh",
+                           ConfigManager.get_instance().get_value('settings', 'mpich_path'),
+                           ConfigManager.get_instance().get_value('settings', 'osu_path'),
+                           "osu_" + name,
+                           alg,
+                           str(n),
+                           str(ppn),
+                           str(msg_size),
+                           nodefile if nodefile else ""],
+                           check=True, capture_output=True, text=True).stdout
   result = float(result)
-  print("Finished lower-level collecting point:",name,alg,n,ppn,msg_size)
   return result
 
-# This function is the same as the previous but runs a different script that sets a custom nodefile for parallel tests
-def collect_point_nodefile(name, alg, n, ppn, msg_size, path):
-  #print(name, alg, n, ppn, msg_size, path)
-  n = int(n)
-  ppn = int(ppn)
-  msg_size = int(msg_size)
-  print("Lower-level collecting point nodefile:",name,alg,n,ppn,msg_size,path)
-  result = subprocess.run(["./src/active_learner/collect_point_single_nodefile.sh", name, alg, str(n), str(ppn), str(msg_size), path], check=True, capture_output=True, text=True).stdout
-  result = float(result)
-  print("Finished lower-level collecting point:",name,alg,n,ppn,msg_size)
-  return result
-
-# This function is a wrapper for collect_point that takes care of breaking a feature set into parts, looking up the alg name, and undoing the preprocessing
-def collect_point_single(name, algs, point, path=None):
+# This function is a wrapper for collect_point that breaks a feature set into parts,
+# looking up the alg name, and undoing the preprocessing
+def collect_point_single(name, algs, point, nodefile=None):
   alg = algs[point[3]]
   n = 2 ** (point[0] - 1)
   ppn =  2 ** (point[1] - 1)
   msg_size = 2 ** (point[2] - 1)
-  if path:
-    return collect_point_nodefile(name, alg, n, ppn, msg_size, path)
-  else:
-    return collect_point(name, alg, n, ppn, msg_size)
+  return collect_point(name, alg, n, ppn, msg_size, nodefile)
 
 
 # This function is a wrapper for collect_point_single that collects multiple points in one call
-# If parallel=1, use machine-specific point to safely execute in parallel
-def collect_point_batch(name, algs, points, parallel=0, topo=None):
+def collect_point_batch(name, algs, points, topo=None):
   print("Attempting to collect: ", points)
   num_results = points.shape[0]
   i = 0
   results = []
-  if(not parallel):
+  if topo is None:
     for row in points:
       results.append(collect_point_single(name, algs, row))
 
-  elif(parallel):
+  else:
     parallel_batch_inputs = []
     root_path = ConfigManager.get_instance().get_value('settings', 'acclaim_root')
     while i < num_results:
       row = points[i,:]
       n = 2 ** (row[0] - 1)
-      print("Attempting to fit ", n)
+      print("Attempting to fit ", int(n))
       nodes = topo.fit_point(n)
       if(nodes):
         path = f"{root_path}/parallel_nodefiles/nodefile{i}"
-        create_nodefile(nodes, path)
-        parallel_batch_inputs.append((name, algs, row, path))
+        nodefile_path = topo.create_nodefile(nodes, path)
+        if nodefile_path:
+          parallel_batch_inputs.append((name, algs, row, nodefile_path))
+        else:
+          parallel_batch_inputs.append((name, algs, row))
         i += 1
         print("Fit passed: ", parallel_batch_inputs[-1])
       else:

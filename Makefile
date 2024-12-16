@@ -3,7 +3,8 @@ N=4
 PPN=32
 MSG_SIZE=262144
 COLLECTIVE="bcast"
-SAVE_FILE="$(ROOT)/fact/test_autotuner.json"
+ACCLAIM_ROOT := $(shell sed -n 's/acclaim_root = *\(.*\) */\1/p' config.ini)
+SAVE_FILE="$(ACCLAIM_ROOT)/test_autotuner.json"
 PYTHON=python3
 
 unittest:

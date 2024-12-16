@@ -8,22 +8,20 @@ import numpy as np
 
 from src.parallel_scheduling.anl_polaris.anl_polaris_parallel_scheduling import (
     Topology, 
-    get_rack_name, 
-    get_dragonfly_group, 
-    get_topology,
-    create_nodefile,
+    _get_rack_name, 
+    _get_dragonfly_group
 )
 
 class TestParallelScheduling(unittest.TestCase):
   def test_get_rack_name(self):
     line = "x3005c0s25b1n0.hsn.cm.polaris.alcf.anl.gov"
-    result = get_rack_name(line)
+    result = _get_rack_name(line)
     correct = "3005"
     self.assertEqual(result,correct)
   
   def test_get_dragonfly_group(self):
     line = "x3005c0s25b1n0.hsn.cm.polaris.alcf.anl.gov"
-    result = get_dragonfly_group(line)
+    result = _get_dragonfly_group(line)
     correct = 751
     self.assertEqual(result,correct)
   
@@ -31,7 +29,7 @@ class TestParallelScheduling(unittest.TestCase):
     pwd = os.getcwd()
     nodefile_path = pwd + '/src/tests/unittests/polaris_topos/nodefile.output'
     nodes = ["test1", "test2", "test34"]
-    create_nodefile(nodes, nodefile_path)
+    Topology.create_nodefile(nodes, nodefile_path)
     with open(nodefile_path, 'r') as f:
       file_lines = f.readlines()
       for i, line in enumerate(file_lines):
@@ -45,7 +43,7 @@ class TestParallelScheduling(unittest.TestCase):
   def test_get_topology_simple(self):
     pwd = os.getcwd()
     simple_topo_path = pwd + '/src/tests/unittests/polaris_topos/anl_polaris_topo_simple.output'
-    topo = get_topology(simple_topo_path)
+    topo = Topology.get_topology(simple_topo_path)
     self.assertEqual(1, len(topo.dragonfly_groups))
     self.assertEqual(751, topo.dragonfly_groups[0].group_name)
     self.assertEqual(1, len(topo.dragonfly_groups[0].racks))
@@ -58,7 +56,7 @@ class TestParallelScheduling(unittest.TestCase):
   def test_get_topology_complex(self):
     pwd = os.getcwd()
     example_topo_path = pwd + '/src/tests/unittests/polaris_topos/anl_polaris_topo_complex.output'
-    topo = get_topology(example_topo_path)
+    topo = Topology.get_topology(example_topo_path)
     self.assertEqual(2, len(topo.dragonfly_groups))
     self.assertEqual(800, topo.dragonfly_groups[0].group_name)
     self.assertEqual(750, topo.dragonfly_groups[1].group_name)
@@ -82,7 +80,7 @@ class TestParallelScheduling(unittest.TestCase):
   def test_fit_topology_simple(self):
     pwd = os.getcwd()
     simple_topo_path = pwd + '/src/tests/unittests/polaris_topos/anl_polaris_topo_simple.output'
-    topo = get_topology(simple_topo_path)
+    topo = Topology.get_topology(simple_topo_path)
     
     first = topo.fit_point(1)
     self.assertEqual(1, len(first))
@@ -106,7 +104,7 @@ class TestParallelScheduling(unittest.TestCase):
   def test_fit_topology_complex(self):
     pwd = os.getcwd()
     example_topo_path = pwd + '/src/tests/unittests/polaris_topos/anl_polaris_topo_complex.output'
-    topo = get_topology(example_topo_path)
+    topo = Topology.get_topology(example_topo_path)
 
     first = topo.fit_point(7)
     self.assertEqual(7, len(first))

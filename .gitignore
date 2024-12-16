@@ -11,6 +11,7 @@ src/parallel_scheduling/anl_theta/aries-topo/src/main
 run_scripts/*
 src/parallel_scheduling/anl_theta/aries-topo/ariesncl
 src/parallel_scheduling/anl_theta/aries-topo/src/output
+osu_microbenchmarks
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

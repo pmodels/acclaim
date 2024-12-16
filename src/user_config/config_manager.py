@@ -28,3 +28,21 @@ class ConfigManager:
        if self.parser is None:
            self.get_instance()
        return self.parser[section][key]
+    
+    def get_topology(self):
+        if self.parser is None:
+           self.get_instance()
+        
+        system = self.parser['settings']['system']
+        if system == 'polaris':
+            from src.parallel_scheduling.anl_polaris.anl_polaris_parallel_scheduling import Topology
+            return Topology()
+        if system == 'local':
+            from src.parallel_scheduling.local.local_parallel_scheduling import Topology
+            return Topology()
+        if system == 'serial':
+            from src.parallel_scheduling.serial.serial_parallel_scheduling import Topology
+            return Topology()
+        raise Exception('Config Manager: Unrecognized topology in config')
+        
+            
