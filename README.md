@@ -15,9 +15,9 @@ The goal of ACCLAiM is to transparently improve the performance of large-scale H
 To setup the ACCLAiM tool, run the provided setup script `setup.py` with the following arguments:
 - **`<mpich_path>`**: The path to the MPICH installation directory
 - **`<system_type>`**: The type of system used for parallel scheduling. The following options are available:
-* `polaris` for ANL's Polaris cluster
-* `serial` disables the parallel scheduler (recommended for all other systems)
-* `local` allows an infinite number of parallel microbenchmarks. Use for testing purposes only.
+  - `polaris` for ANL's Polaris cluster
+  - `serial` disables the parallel scheduler (recommended for all other systems)
+  - `local` allows an infinite number of parallel microbenchmarks. Use for testing purposes only.
 - **`[max_ppn]`** (optional): The maximum number of processes per node for a single microbenchmark run.
 
 Note: The `max_ppn` argument is optional. The provided value will be ignored for `system=polaris`.
@@ -33,11 +33,11 @@ Review all of the settings and confirm they are correct.
 
 When installing the OSU microbenchmarks on Mac systems, there may be a compilation error because Mac OS does not implement pthreads barrier.
 To work around this issue, We have successfully compiled the benchmarks by adding an impoementation to `osu_microbenchmarks/c/util/osu_util_mpi.h/c.
-See (this patch)[https://github.com/pmwkaa/ioarena/commit/b8854d4b164591cb62a97f67a6dc3645b26f4b39#diff-32028cf20b50afd839db7008666a051ba761b4947f1690445f42bda23705c96bR37] for an example implementation.
+See [this patch](https://github.com/pmwkaa/ioarena/commit/b8854d4b164591cb62a97f67a6dc3645b26f4b39#diff-32028cf20b50afd839db7008666a051ba761b4947f1690445f42bda23705c96bR37) for an example implementation.
 
 ## Publication
 
-ACCLAiM is the result of (this paper)[https://mjwilkins.org/assets/pdfs/acclaim.pdf]. Please check it out for more details.
+ACCLAiM is the result of [this paper](https://mjwilkins.org/assets/pdfs/acclaim.pdf). Please check it out for more details.
 
 To refer to ACCLAiM, please use the following citation:
 ```
