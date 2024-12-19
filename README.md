@@ -32,7 +32,7 @@ Review all of the settings and confirm they are correct.
 ## Known Issues
 
 When installing the OSU microbenchmarks on Mac systems, there may be a compilation error because Mac OS does not implement pthreads barrier.
-To work around this issue, We have successfully compiled the benchmarks by adding an impoementation to `osu_microbenchmarks/c/util/osu_util_mpi.h/c.
+To work around this issue, We have successfully compiled the benchmarks by adding an implementation to `osu_microbenchmarks/c/util/osu_util_mpi.h/c.
 See [this patch](https://github.com/pmwkaa/ioarena/commit/b8854d4b164591cb62a97f67a6dc3645b26f4b39#diff-32028cf20b50afd839db7008666a051ba761b4947f1690445f42bda23705c96bR37) for an example implementation.
 
 ## Publication
