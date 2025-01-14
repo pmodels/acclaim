@@ -112,6 +112,13 @@ else:
         else:
             raise Exception("Error installing OSU Microbenchmarks.")
 
+# Create the temporary directory for nodefiles
+nodefile_dir = os.path.join(os.getcwd(), "_parallel_nodefiles")
+
+if not os.path.exists(nodefile_dir):
+    os.makedirs(nodefile_dir)
+
+
 # Write the config file
 config = configparser.ConfigParser()
 

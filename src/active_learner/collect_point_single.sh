@@ -57,4 +57,14 @@ if [ -z "$nodefile" ]; then
             }
         } 
         END {if(count){print total/count}}'
+else
+    ${mpich_path}/bin/mpiexec -f $nodefile -n $processes -ppn $ppn ${osu_path}/${test_name} -m "$msg_size":"$msg_size_plus" | awk -v nodes="$n" -v ppn="$ppn" -v name="$test_name" -v alg=$alg\
+        '! /#/ && NF {if($2 != ""){print name"\t"nodes"\t"ppn"\t"alg"\t"$1"\t"$2"\t"$3"\t"$4} else{print name"\t"nodes"\t"ppn"\t"alg"\t1\t"$1}}' \
+        | awk -v test="$test_name" -v alg="$alg" -v node="$n" -v proc="$ppn" -v msg_size="$msg_size" '{
+            if($1 == test && $2 == node && $3 == proc && $4 == alg && $5 == msg_size){
+                total+=$6; 
+                count+=1;
+            }
+        } 
+        END {if(count){print total/count}}'
 fi

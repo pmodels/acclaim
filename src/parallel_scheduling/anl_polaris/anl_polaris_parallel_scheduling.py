@@ -46,7 +46,7 @@ class Rack:
         if num_nodes > self.num_nodes():
             return self.nodes
         else:
-            return self.nodes[:num_nodes]
+            return self.nodes[:int(num_nodes)]
 
     # Empties rack from previous fit attempts
     def reset_fit(self):

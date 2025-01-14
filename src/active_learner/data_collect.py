@@ -18,7 +18,7 @@ from src.user_config.config_manager import ConfigManager
 
 
 # This function uses a Python subprocess to run the benchmark script 
-def collect_point(name, alg, n, ppn, msg_size, nodefile=None):
+def collect_point(name, alg, n, ppn, msg_size, nodefile_path=None):
   n = int(n)
   ppn = int(ppn)
   msg_size = int(msg_size)
@@ -30,9 +30,10 @@ def collect_point(name, alg, n, ppn, msg_size, nodefile=None):
                            str(n),
                            str(ppn),
                            str(msg_size),
-                           nodefile if nodefile else ""],
+                           nodefile_path if nodefile_path else ""],
                            check=True, capture_output=True, text=True).stdout
   result = float(result)
+  print("Result:", result)
   return result
 
 # This function is a wrapper for collect_point that breaks a feature set into parts,
@@ -64,7 +65,7 @@ def collect_point_batch(name, algs, points, topo=None):
       print("Attempting to fit ", int(n))
       nodes = topo.fit_point(n)
       if(nodes):
-        path = f"{root_path}/parallel_nodefiles/nodefile{i}"
+        path = f"{root_path}/_parallel_nodefiles/nodefile{i}"
         nodefile_path = topo.create_nodefile(nodes, path)
         if nodefile_path:
           parallel_batch_inputs.append((name, algs, row, nodefile_path))
@@ -84,10 +85,6 @@ def collect_point_batch(name, algs, points, topo=None):
         topo.reset_fit()
         parallel_batch_inputs = []
 
-    files = glob.glob(f"{root_path}/parallel_nodefiles/*")
-    for f in files:
-      os.remove(f)
-
     if(len(parallel_batch_inputs) != 0):
       print("Collecting leftover points")
       print("Collecting ", len(parallel_batch_inputs), " points in parallel")
@@ -96,6 +93,10 @@ def collect_point_batch(name, algs, points, topo=None):
       for output in outputs:
         results.append(output)
     topo.reset_fit()
+  
+  files = glob.glob(f"{root_path}/_parallel_nodefiles/*")
+  for f in files:
+    os.remove(f)
 
   if(len(results) != num_results):
     print("Error, did not collect the right amount of data!")
