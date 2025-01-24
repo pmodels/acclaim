@@ -6,10 +6,7 @@ import numpy as np
 from src.user_config.config_manager import ConfigManager
 
 #This function finds all algorithms and returns in an enumerated dictionary
-def read_algs(collective):
-  root_path = ConfigManager.get_instance().get_value('settings', 'acclaim_root')
-  algs_path = root_path + '/utils/mpich/algorithm_config/all_algs.csv'
-
+def read_algs(collective, algs_path=ConfigManager.get_instance().get_value('settings', 'algs_json')):
   with open(algs_path) as csv_file:
     csv_reader = csv.reader(csv_file, delimiter=',')
     algs_dict = None
@@ -22,12 +19,11 @@ def read_algs(collective):
           algs_dict = dict(zip(keys, algs))
       
   if(algs_dict == None):
-    print("Warning: Collective Not Found!")
+    Warning("Warning: Collective Not Found!")
   return algs_dict
 
 #This function takes a 2D array of input args for the ML model and adds algorithms as another feature
 def add_algs(feature_space, algs):
-
   num_algs = len(list(algs.keys()))
   if(np.squeeze(feature_space).ndim == 1):
     alg_space = np.zeros((num_algs, feature_space.size + 1))
@@ -49,7 +45,6 @@ def add_algs(feature_space, algs):
 
 #This function takes a set of input args and returns all possible algorithms for that input
 def get_all_algs(x, algs):
-
   num_algs = len(list(algs.keys()))
   new_points_x = np.zeros((num_algs, x.shape[0]))
 

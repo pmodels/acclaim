@@ -110,7 +110,10 @@ def train_model(n, ppn, msg_size, collective, min_reps=10):
     else:
       if(convergence_criteria(convergence_vals)):
         converged = True
- 
+
+    if(converged):
+      print("Active Learning reached convergence, exiting!")
+
   return feature_space, rf
 
 

@@ -1,26 +1,21 @@
 # This file tests "json.py" using unittest
 import unittest
 
-import sys
-import json
+import os
 import numpy as np
 
 from sklearn.ensemble import RandomForestRegressor
 
 from src.json_file.json_file import read_generic_json_file, get_selections, get_rules, rules_to_dict, update_collective
+from src.json_file.param_algs_to_json import split_param_alg, get_param_rule
 from src.active_learner.algs import read_algs, add_algs
 from src.active_learner.normalizations import undo_preprocess_input
+from src.user_config.config_manager import ConfigManager
 
 class TestJson(unittest.TestCase):
   def test_get_selections(self):
     collective="bcast"
     algs = read_algs(collective)
-    feature_space = np.array([[1,2,1],
-                              [1,2,2],
-                              [1,3,1],
-                              [1,3,2],
-                              [2,1,1],
-                              [2,1,2]])
     y_test = np.array([1,2,3,3,2,1,2,1,3,1,2,3,3,2,1,2,1,3]) #Correct selections are the minimum every 3, so 0,2,1,0,2,1
     result = get_selections(y_test, algs)
     correct = [0,2,1,0,2,1]
@@ -52,8 +47,62 @@ class TestJson(unittest.TestCase):
     correct_values = [0,2,1,0,2]
     self.assertEqual(result_list, correct_keys.tolist())
     self.assertEqual(list(result.values()), correct_values)
-    #self.assertEqual(result, correct)
-    
+  
+  def test_split_param_alg(self):
+    alg_str = "recursive_doubling"
+    result = split_param_alg(alg_str)
+    self.assertEqual(result[0], "recursive_doubling")
+    self.assertIsNone(result[1])
+    alg_str = "recursive_multiplying2"
+    result = split_param_alg(alg_str)
+    self.assertEqual(result[0], "recursive_multiplying")
+    self.assertEqual(result[1], 2)
+    alg_str = "recursive_multiplying16"
+    result = split_param_alg(alg_str)
+    self.assertEqual(result[0], "recursive_multiplying")
+    self.assertEqual(result[1], 16)
+
+  def test_get_param_rule(self):
+    collective = "allreduce"
+    alg_str = "recursive_multiplying"
+    param_value = 2
+    result = get_param_rule(collective, alg_str, param_value)
+    self.assertEqual(result, "k=2")
+    alg_str = "tree"
+    result = get_param_rule(collective, alg_str, param_value)
+    self.assertEqual(result, "k=2")
+    alg_str = "recexch"
+    result = get_param_rule(collective, alg_str, param_value)
+    self.assertEqual(result, "k=2")
+    alg_str = "recexch_doubling"
+    result = get_param_rule(collective, alg_str, param_value)
+    self.assertEqual(result, "k=2")
+    alg_str = "recexch_halving"
+    result = get_param_rule(collective, alg_str, param_value)
+    self.assertEqual(result, "k=2")
+    alg_str = "k_brucks"
+    result = get_param_rule(collective, alg_str, param_value)
+    self.assertEqual(result, "k=2")
+    param_value = None
+    result = get_param_rule(collective, alg_str, param_value)
+    self.assertIsNone(result)
+  
+  def test_rules_to_dict_param(self):
+    collective="allreduce"
+    param_algs_path = os.path.join(ConfigManager.get_instance().get_value('settings', 'acclaim_root'), "utils/mpich/algorithm_config/all_algs_param.csv")
+    algs = read_algs(collective, param_algs_path)
+    feature_space = np.array([[1,2,1],
+                              [1,2,2],
+                              [1,2,3],
+                            ])
+    rules = {}
+    rules[feature_space[0,:].astype('int').tobytes()] = 3
+
+    rules_dict = rules_to_dict(collective, rules, algs)
+    result = list(rules_dict["comm_size=any"]["comm_avg_ppn=any"]["avg_msg_size=any"].keys())
+    self.assertEqual(result[0], "algorithm=MPIR_allreduce_intra_tree")
+    result = list(rules_dict["comm_size=any"]["comm_avg_ppn=any"]["avg_msg_size=any"]["algorithm=MPIR_allreduce_intra_tree"].keys())
+    self.assertEqual(result[0], "k=3")
 
   def test_update_collective(self):
     collective="bcast"

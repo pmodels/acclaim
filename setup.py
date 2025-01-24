@@ -118,7 +118,6 @@ nodefile_dir = os.path.join(os.getcwd(), "_parallel_nodefiles")
 if not os.path.exists(nodefile_dir):
     os.makedirs(nodefile_dir)
 
-
 # Write the config file
 config = configparser.ConfigParser()
 
@@ -127,7 +126,8 @@ config['settings'] = {
     'mpich_path': mpich_path,
     'osu_path': os.path.join(os.getcwd(), "osu_microbenchmarks/build/libexec/osu-micro-benchmarks/mpi/collective"),
     'system': args.system,
-    'max_ppn': max_ppn
+    'max_ppn': max_ppn,
+    'algs_json': os.path.join(os.getcwd(), "utils/mpich/algorithm_config/all_algs.csv"),
 }
 
 print("Writing the config.ini file...")

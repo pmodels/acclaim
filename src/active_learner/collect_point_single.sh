@@ -11,6 +11,23 @@
 # $7 = message size
 # $8 (optional) = nodefile
 
+split_string() {
+    local input="$1"
+    local alg_name_var="$2"
+    local alg_param_var="$3"
+
+    # Use regex to check if the string ends with a number
+    if [[ $input =~ ^(.*[^0-9])([0-9]+)$ ]]; then
+        # Extract the preceding string and the number
+        eval "$alg_name_var='${BASH_REMATCH[1]}'"
+        eval "$alg_param_var='${BASH_REMATCH[2]}'"
+    else
+        # If no number is found, return the whole string and an empty string
+        eval "$alg_name_var='$input'"
+        eval "$alg_param_var=''"
+    fi
+}
+
 mpich_path=$1
 osu_path=$2
 test_name=$3
@@ -44,8 +61,26 @@ if [ "$alg" == "smp" ] ; then
   continue
 fi
 
-export MPIR_CVAR_${coll_name_upper}_INTRA_ALGORITHM="$alg"
-env_var="MPIR_CVAR_${coll_name_upper}_INTRA_ALGORITHM"
+alg_name=""
+alg_param=""
+split_string "$alg" alg_name alg_param
+
+export MPIR_CVAR_${coll_name_upper}_INTRA_ALGORITHM="$alg_name"
+if [[ -n $alg_param ]]; then
+    if [[ $alg_name ==  "recexch" || $alg_name == "recexch_doubling" || $alg_name == "recexch_halving" ]]; then
+      export MPIR_CVAR_${coll_name_upper}_RECEXCH_KVAL="$alg_param"
+    fi
+    if [[ $alg_name ==  "tree" ]]; then
+      export MPIR_CVAR_${coll_name_upper}_TREE_KVAL="$alg_param"
+    fi
+    if [[ $alg_name ==  "recursive_multiplying" ]]; then
+      export MPIR_CVAR_${coll_name_upper}_RECURSIVE_MULTIPLYING_KVAL="$alg_param"
+    fi
+    if [[ $alg_name ==  "k_brucks" ]]; then
+      export MPIR_PARAM_${coll_name_upper}_BRUCKS_KVAL="$alg_param"
+    fi
+
+fi
 
 if [ -z "$nodefile" ]; then
     ${mpich_path}/bin/mpiexec -n $processes -ppn $ppn ${osu_path}/${test_name} -m "$msg_size":"$msg_size_plus" | awk -v nodes="$n" -v ppn="$ppn" -v name="$test_name" -v alg=$alg\

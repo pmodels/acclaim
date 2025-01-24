@@ -5,6 +5,7 @@ import json
 import numpy as np
 from src.active_learner.algs import read_algs, add_algs
 from src.user_config.config_manager import ConfigManager
+from src.json_file.param_algs_to_json import split_param_alg, get_param_rule
 from collections import OrderedDict
 
 #This function reads the original/generic .json file currently used in MPICH and returns it as a mutable Python object (nested dictionaries)
@@ -73,6 +74,7 @@ def get_rules(feature_space, selections, algs, rf):
 
   return break_points
 
+
 #Converts the highest values to "any"
 def any_helper(json_dict):
   if(not json_dict):
@@ -85,7 +87,6 @@ def any_helper(json_dict):
  
   for nested_dict in json_dict:
     any_helper(json_dict[nested_dict])
-
 
 #Converts rules into a nested dict
 def rules_to_dict(collective, rules, algs):
@@ -112,13 +113,20 @@ def rules_to_dict(collective, rules, algs):
     if(feature_set[2] != msg_size or upstream_change):
       msg_size = feature_set[2]
       rule_alg_str = algs[rules[feature_set_bytes]]
-      cur_comm_ppn_dict["avg_msg_size<=" + str(msg_size)] = {"algorithm=MPIR_" + collective + "_intra_" + rule_alg_str: {}} 
+      alg_str, param_value = split_param_alg(rule_alg_str)
+      if param_value is None:
+        cur_comm_ppn_dict["avg_msg_size<=" + str(msg_size)] = {"algorithm=MPIR_" + collective + "_intra_" + alg_str: {}}
+      else:
+        param_rule = get_param_rule(collective, alg_str, param_value)
+        cur_comm_ppn_dict["avg_msg_size<=" + str(msg_size)] = {"algorithm=MPIR_" + collective + "_intra_" + alg_str: {param_rule: {}}}
 
   any_helper(to_return)
   return to_return
 
-def update_collective(json_file_data, collective, feature_space, rf):
-  algs = read_algs(collective)
+
+def update_collective(json_file_data, collective, feature_space, rf, algs=None):
+  if algs is None:
+    algs = read_algs(collective)
 
   #unnormalize data
   y_test = rf.predict(add_algs(feature_space, algs))

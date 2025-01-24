@@ -33,7 +33,6 @@ def collect_point(name, alg, n, ppn, msg_size, nodefile_path=None):
                            nodefile_path if nodefile_path else ""],
                            check=True, capture_output=True, text=True).stdout
   result = float(result)
-  print("Result:", result)
   return result
 
 # This function is a wrapper for collect_point that breaks a feature set into parts,
