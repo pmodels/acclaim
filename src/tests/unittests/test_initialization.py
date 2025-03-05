@@ -56,7 +56,9 @@ class TestInitialization(unittest.TestCase):
                   [2,1,1],
                   [2,1,2],
                   [2,2,1],
-                  [2,2,2]])
+                  [2,2,2],
+                  [2,2,3],
+                  [2,2,4]])
     result = get_initial_points(X)
     correct = np.array([[1,1,1],
                         [1,2,1],
@@ -89,8 +91,8 @@ class TestInitialization(unittest.TestCase):
                   [2,3,4]])
     result = get_initial_points(X)
     correct = np.array([[1,1,1],
-                        [1,2,4],
-                        [2,1,4]])
+                        [1,2,2],
+                        [1,3,4]])
     self.assertEqual(result.tolist(), correct.tolist())
     
 

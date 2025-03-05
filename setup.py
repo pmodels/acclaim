@@ -69,6 +69,9 @@ parser.add_argument('system', type=str, choices = ['polaris', 'local', 'serial']
                         help = 'The system to setup for parallel scheduling')
 parser.add_argument('max_ppn', type=int, nargs='?',
                         help = 'The maximum processes per node for a single microbenchmark run')
+parser.add_argument('num_initial_points', type=int, nargs='?', default=3,
+                        help = '''The number of training points to collect in the first iteration. 
+                        Increase for fewer algorithms, reduce for many algorithms.''')
 
 args = parser.parse_args()
 mpich_path = args.mpich_path[0]
@@ -127,6 +130,7 @@ config['settings'] = {
     'osu_path': os.path.join(os.getcwd(), "osu_microbenchmarks/build/libexec/osu-micro-benchmarks/mpi/collective"),
     'system': args.system,
     'max_ppn': max_ppn,
+    'num_initial_points': args.num_initial_points,
     'algs_json': os.path.join(os.getcwd(), "utils/mpich/algorithm_config/all_algs.csv"),
 }
 
