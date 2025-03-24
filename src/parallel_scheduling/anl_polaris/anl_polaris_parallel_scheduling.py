@@ -96,7 +96,7 @@ class DragonflyGroup:
 
         return nodes_assigned
     
-    # Empties rack pair from previous fit attempt
+    # Empties the group from previous fit attempt
     def reset_fit(self):
         for rack in self.racks:
             rack.reset_fit()
