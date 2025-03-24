@@ -12,7 +12,7 @@ import configparser
 ###############
 
 # Function to check if MPICH is installed at the provided path
-def check_mpich_installation(mpich_path):
+def check_mpich_installation(args, mpich_path):
     libmpi_path = os.path.join(mpich_path, 'lib', 'libmpi.la')
     mpiexec_path = os.path.join(mpich_path, 'bin', 'mpiexec')
     
@@ -23,9 +23,8 @@ def check_mpich_installation(mpich_path):
 
     # Check if mpiexec exists
     if not os.path.exists(mpiexec_path):
-        warnings.warn(("MPICH install found, but mpiexec is not present." 
-                        " If you are using a third-party launcher, please refer to the README/documentation"
-                        " on how to update the included scripts to work on your system."))
+        if not args.launcher_path:
+            raise FileNotFoundError("mpiexec not found in MPICH installation and --launcher_path not set!")
     else:
         print("MPICH is properly installed.")
 
@@ -72,6 +71,8 @@ parser.add_argument('max_ppn', type=int, nargs='?',
 parser.add_argument('num_initial_points', type=int, nargs='?', default=3,
                         help = '''The number of training points to collect in the first iteration. 
                         Increase for fewer algorithms, reduce for many algorithms.''')
+parser.add_argument('--launcher_path', type=str,
+                        help = 'The path to the process launcher (if not ${mpich_path}/mpiexec)')
 
 args = parser.parse_args()
 mpich_path = args.mpich_path[0]
@@ -87,13 +88,19 @@ elif not args.max_ppn:
 else:
     max_ppn = args.max_ppn
 
+# Set the launcher path if necessary based on arguments
+if args.launcher_path:
+    launcher_path = args.launcher_path
+else:
+    launcher_path = os.path.join(mpich_path, 'bin', 'mpiexec')
+
 # Check each required package
 for package in required_packages:
     if not check_package(package):
         raise Exception("Missing at least one necessary package.")
 
 # Check MPICH install
-check_mpich_installation(mpich_path)
+check_mpich_installation(args, mpich_path)
 
 # Download and install the OSU Microbenchmarks
 if os.path.exists("osu_microbenchmarks"):
@@ -127,6 +134,7 @@ config = configparser.ConfigParser()
 config['settings'] = {
     'acclaim_root': os.getcwd(),
     'mpich_path': mpich_path,
+    'launcher_path': launcher_path,
     'osu_path': os.path.join(os.getcwd(), "osu_microbenchmarks/build/libexec/osu-micro-benchmarks/mpi/collective"),
     'system': args.system,
     'max_ppn': max_ppn,

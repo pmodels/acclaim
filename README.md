@@ -19,6 +19,7 @@ To setup the ACCLAiM tool, run the provided setup script `setup.py` with the fol
   - `serial` disables the parallel scheduler (recommended for all other systems)
   - `local` allows an infinite number of parallel microbenchmarks. Use for testing purposes only.
 - **`[max_ppn]`** (optional): The maximum number of processes per node for a single microbenchmark run.
+- **`[--launcher_path]`** (optional): The path to the process launcher (e.g., mpiexec). If this argument is not supplied, ACCLAiM will use ${mpich_path}/bin/mpiexec.
 
 Note: The `max_ppn` argument is optional. The provided value will be ignored for `system=polaris`.
 For `local`, the default is 8, and for `serial`, the default is 64.

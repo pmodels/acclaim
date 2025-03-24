@@ -3,13 +3,14 @@
 
 # Runs a single OSU Benchmark for a single algorithm, returns the data
 # $1 = MPICH path
-# $2 = osu_microbenchmark path
-# $3 = name of test
-# $4 = algorithm name
-# $5 = number of nodes
-# $6 = number of ppn
-# $7 = message size
-# $8 (optional) = nodefile
+# $2 = Process launcher (e.g., mpiexec) path 
+# $3 = osu_microbenchmark path
+# $4 = name of test
+# $5 = algorithm name
+# $6 = number of nodes
+# $7 = number of ppn
+# $8 = message size
+# $9 (optional) = nodefile
 
 split_string() {
     local input="$1"
@@ -29,14 +30,16 @@ split_string() {
 }
 
 mpich_path=$1
-osu_path=$2
-test_name=$3
-alg=$4
-n=$5
-ppn=$6
-msg_size=$7
-if [ ! -z "$8" ]; then
-  nodefile=$8
+launcher_path=$2
+osu_path=$3
+test_name=$4
+alg=$5
+n=$6
+ppn=$7
+msg_size=$8
+
+if [ ! -z "$9" ]; then
+  nodefile=$9
 else
   nodefile=""
 fi
@@ -83,7 +86,7 @@ if [[ -n $alg_param ]]; then
 fi
 
 if [ -z "$nodefile" ]; then
-    ${mpich_path}/bin/mpiexec -n $processes -ppn $ppn ${osu_path}/${test_name} -m "$msg_size":"$msg_size_plus" | awk -v nodes="$n" -v ppn="$ppn" -v name="$test_name" -v alg=$alg\
+    ${launcher_path} -n $processes -ppn $ppn -genv LD_LIBRARY_PATH=${mpich_path}/lib:$LD_LIBRARY_PATH ${osu_path}/${test_name} -m "$msg_size":"$msg_size_plus" | awk -v nodes="$n" -v ppn="$ppn" -v name="$test_name" -v alg=$alg\
         '! /#/ && NF {if($2 != ""){print name"\t"nodes"\t"ppn"\t"alg"\t"$1"\t"$2"\t"$3"\t"$4} else{print name"\t"nodes"\t"ppn"\t"alg"\t1\t"$1}}' \
         | awk -v test="$test_name" -v alg="$alg" -v node="$n" -v proc="$ppn" -v msg_size="$msg_size" '{
             if($1 == test && $2 == node && $3 == proc && $4 == alg && $5 == msg_size){
@@ -93,7 +96,7 @@ if [ -z "$nodefile" ]; then
         } 
         END {if(count){print total/count}}'
 else
-    ${mpich_path}/bin/mpiexec -f $nodefile -n $processes -ppn $ppn ${osu_path}/${test_name} -m "$msg_size":"$msg_size_plus" | awk -v nodes="$n" -v ppn="$ppn" -v name="$test_name" -v alg=$alg\
+    ${launcher_path} -f $nodefile -n $processes -ppn $ppn -genv LD_LIBRARY_PATH=${mpich_path}/lib:$LD_LIBRARY_PATH ${osu_path}/${test_name} -m "$msg_size":"$msg_size_plus" | awk -v nodes="$n" -v ppn="$ppn" -v name="$test_name" -v alg=$alg\
         '! /#/ && NF {if($2 != ""){print name"\t"nodes"\t"ppn"\t"alg"\t"$1"\t"$2"\t"$3"\t"$4} else{print name"\t"nodes"\t"ppn"\t"alg"\t1\t"$1}}' \
         | awk -v test="$test_name" -v alg="$alg" -v node="$n" -v proc="$ppn" -v msg_size="$msg_size" '{
             if($1 == test && $2 == node && $3 == proc && $4 == alg && $5 == msg_size){
