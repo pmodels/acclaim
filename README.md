@@ -15,7 +15,8 @@ The goal of ACCLAiM is to transparently improve the performance of large-scale H
 To setup the ACCLAiM tool, run the provided setup script `setup.py` with the following arguments:
 - **`<mpich_path>`**: The path to the MPICH installation directory
 - **`<system_type>`**: The type of system used for parallel scheduling. The following options are available:
-  - `polaris` for ANL's Polaris cluster
+  - `polaris` for ANL's Polaris system
+  - `aurora` for ANL's Aurora system
   - `serial` disables the parallel scheduler (recommended for all other systems)
   - `local` allows an infinite number of parallel microbenchmarks. Use for testing purposes only.
 - **`[max_ppn]`** (optional): The maximum number of processes per node for a single microbenchmark run.

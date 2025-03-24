@@ -37,6 +37,9 @@ class ConfigManager:
         if system == 'polaris':
             from src.parallel_scheduling.anl_polaris.anl_polaris_parallel_scheduling import Topology
             return Topology()
+        if system == 'aurora':
+            from src.parallel_scheduling.anl_aurora.anl_aurora_parallel_scheduling import Topology
+            return Topology()
         if system == 'local':
             from src.parallel_scheduling.local.local_parallel_scheduling import Topology
             return Topology()

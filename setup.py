@@ -64,7 +64,7 @@ def new_cd(x):
 parser = argparse.ArgumentParser(description='Setup the ACCLAiM project.')
 parser.add_argument('mpich_path', type=str, nargs=1, 
                         help = 'The path to the MPICH install directory')
-parser.add_argument('system', type=str, choices = ['polaris', 'local', 'serial'],
+parser.add_argument('system', type=str, choices = ['polaris', 'aurora', 'local', 'serial'],
                         help = 'The system to setup for parallel scheduling')
 parser.add_argument('max_ppn', type=int, nargs='?',
                         help = 'The maximum processes per node for a single microbenchmark run')
@@ -80,6 +80,8 @@ mpich_path = args.mpich_path[0]
 # Set Max PPN if necessary based on arguments
 if args.system == 'polaris':
     max_ppn = 64
+elif args.system == 'aurora':
+    max_ppn = 12 # The most common PPN on Aurora is 12 (1 process per GPU Tile)
 elif not args.max_ppn:
     if args.system == 'local':
         max_ppn = 8
