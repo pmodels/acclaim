@@ -6,13 +6,52 @@ import numpy as np
 
 from sklearn.ensemble import RandomForestRegressor
 
-from src.json_file.json_file import read_generic_json_file, get_selections, get_rules, rules_to_dict, update_collective
+from src.json_file.json_file import ReadJsonError, read_generic_json_file, read_collective_shell, get_selections, get_rules, rules_to_dict, shell_wrapper, update_collective
 from src.json_file.param_algs_to_json import split_param_alg, get_param_rule
 from src.active_learner.algs import read_algs, add_algs
 from src.active_learner.normalizations import undo_preprocess_input
 from src.user_config.config_manager import ConfigManager
 
 class TestJson(unittest.TestCase):
+
+  def test_read_generic_json_file(self):
+    result = read_generic_json_file()
+    first_entry_name = next(iter(result.keys()))
+    expected_first_entry_name = "collective=bcast"
+    self.assertEqual(first_entry_name, expected_first_entry_name)
+
+  def test_read_collective_shell(self):
+    collective = "non_existent_collective"
+    with self.assertRaises(ReadJsonError):
+        read_collective_shell(collective)
+    collective="allreduce"
+    result = read_collective_shell(collective)
+    expected_output = {
+              "is_op_built_in=no": {
+                  "algorithm=MPIR_Allreduce_intra_recursive_doubling": {}
+              },
+              "is_op_built_in=yes": {
+                  "is_commutative=no": {
+                      "avg_msg_size<=8": {
+                          "algorithm=MPIR_Allreduce_intra_recursive_doubling": {}
+                      },
+                      "avg_msg_size=any": {
+                          "count<pow2": {
+                              "algorithm=MPIR_Allreduce_intra_recursive_doubling": {}
+                          },
+                          "count=any": {
+                              "algorithm=MPIR_Allreduce_intra_reduce_scatter_allgather": {}
+                          }
+                      }
+                  },
+                  "is_commutative=yes": {
+                      "replace me": {}
+                  }
+              }
+            }
+
+    self.assertEqual(result, expected_output)
+
   def test_get_selections(self):
     collective="bcast"
     algs = read_algs(collective)
@@ -102,6 +141,29 @@ class TestJson(unittest.TestCase):
     result = list(rules_dict["comm_size=any"]["comm_avg_ppn=any"]["avg_msg_size=any"].keys())
     self.assertEqual(result[0], "algorithm=MPIR_allreduce_intra_tree")
     result = list(rules_dict["comm_size=any"]["comm_avg_ppn=any"]["avg_msg_size=any"]["algorithm=MPIR_allreduce_intra_tree"].keys())
+    self.assertEqual(result[0], "k=3")
+
+  def test_shell_wrapper(self):
+    collective="allreduce"
+    param_algs_path = os.path.join(ConfigManager.get_instance().get_value('settings', 'acclaim_root'), "utils/mpich/algorithm_config/all_algs_param.csv")
+    algs = read_algs(collective, param_algs_path)
+    feature_space = np.array([[1,2,1],
+                              [1,2,2],
+                              [1,2,3],
+                            ])
+    rules = {}
+    rules[feature_space[0,:].astype('int').tobytes()] = 3
+
+    rules_dict = shell_wrapper("no_wrapper", rules_to_dict(collective, rules, algs))
+    result = list(rules_dict["comm_size=any"]["comm_avg_ppn=any"]["avg_msg_size=any"].keys())
+    self.assertEqual(result[0], "algorithm=MPIR_allreduce_intra_tree")
+    result = list(rules_dict["comm_size=any"]["comm_avg_ppn=any"]["avg_msg_size=any"]["algorithm=MPIR_allreduce_intra_tree"].keys())
+    self.assertEqual(result[0], "k=3")
+
+    rules_dict = shell_wrapper(collective, rules_to_dict(collective, rules, algs))
+    result = list(rules_dict["is_op_built_in=yes"]["is_commutative=yes"]["comm_size=any"]["comm_avg_ppn=any"]["avg_msg_size=any"].keys())
+    self.assertEqual(result[0], "algorithm=MPIR_allreduce_intra_tree")
+    result = list(rules_dict["is_op_built_in=yes"]["is_commutative=yes"]["comm_size=any"]["comm_avg_ppn=any"]["avg_msg_size=any"]["algorithm=MPIR_allreduce_intra_tree"].keys())
     self.assertEqual(result[0], "k=3")
 
   def test_update_collective(self):

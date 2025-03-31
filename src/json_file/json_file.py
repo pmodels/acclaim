@@ -1,6 +1,6 @@
 # This file includes methods to generate a custom .json file to configure MPICH
 
-import os
+import sys
 import json
 import numpy as np
 from src.active_learner.algs import read_algs, add_algs
@@ -8,17 +8,44 @@ from src.user_config.config_manager import ConfigManager
 from src.json_file.param_algs_to_json import split_param_alg, get_param_rule
 from collections import OrderedDict
 
-#This function reads the original/generic .json file currently used in MPICH and returns it as a mutable Python object (nested dictionaries)
+# Custom exception class for json read errors
+class ReadJsonError(Exception):
+    pass
+
+# This function reads the original/generic .json file currently used in MPICH and returns it as a mutable Python object (nested dictionaries)
 def read_generic_json_file():
   root_path = ConfigManager.get_instance().get_value('settings', 'acclaim_root')
   json_path = root_path + '/utils/mpich/algorithm_config/generic.json'
-  with open(json_path) as json_file:
-    json_file_data = json.load(json_file)
+  try:
+    with open(json_path) as json_file:
+      json_file_data = json.load(json_file)
+  except FileNotFoundError:
+    print(f"Error: The default .json file '{json_path}' was not found.")
+    raise ReadJsonError()
+  except json.JSONDecodeError:
+    print(f"Error: The default .json file '{json_path}' is not a valid JSON file.")
+    raise ReadJsonError()
   
   return json_file_data
 
+# Reads the "shell" (default selections for edge cases that surround the autotuned selections) from the .json file and returns it as a mutable Python object
 
-#Gets the selections for each power of two point
+
+def read_collective_shell(collective):
+  root_path = ConfigManager.get_instance().get_value('settings', 'acclaim_root')
+  json_path = root_path + f"/utils/mpich/algorithm_config/{collective}_shell.json"
+  try:
+    with open(json_path) as json_file:
+      json_file_data = json.load(json_file)
+  except FileNotFoundError:
+    raise ReadJsonError()
+  except json.JSONDecodeError:
+    print(f"Error: The collective shell file '{json_path}' is not a valid JSON file.")
+    raise ReadJsonError()
+  
+  return json_file_data
+
+# Gets the selections for each power of two point
 def get_selections(y_test, algs):
   selections = []
   num_algs = len(algs)
@@ -30,18 +57,18 @@ def get_selections(y_test, algs):
   return selections
 
 
-#Gets the break points in the space where model prediction switches from one algorithm to another
+# Gets the break points in the space where model prediction switches from one algorithm to another
 def get_rules(feature_space, selections, algs, rf):
-  #Initialize variables, add initial selection as first rule
+  # Initialize variables, add initial selection as first rule
   s_prev = selections[0] 
   i = 0
   break_points = {}
   break_points[feature_space[0,:].astype('int').tobytes()] = s_prev
 
-  #Iterate through selection
+  # Iterate through selection
   for s_cur in selections:
 
-    #If the selection changed, add more rules
+    # If the selection changed, add more rules
     if s_prev != s_cur:
       n_prev = feature_space[i-1,0]
       ppn_prev = feature_space[i-1,1]
@@ -50,7 +77,7 @@ def get_rules(feature_space, selections, algs, rf):
       ppn_cur = feature_space[i,1]
       msg_size_cur = feature_space[i,2]
       
-      #If the n and ppn are the same, test the midpoint and make rules
+      # If the n and ppn are the same, test the midpoint and make rules
       if (n_prev == n_cur and ppn_prev == ppn_cur):
         msg_size = np.log2((2**(msg_size_cur - 1) + 2 ** (msg_size_cur - 1))/2) + 1
         X_test = add_algs(np.array([n_cur, ppn_cur, msg_size]), algs)
@@ -64,7 +91,7 @@ def get_rules(feature_space, selections, algs, rf):
           break_points[feature_space[i-1,:].astype('int').tobytes()] = s_prev
           break_points[feature_space[i,:].astype('int').tobytes()] = fastest_alg
 
-      #Otherwise, automatically create a rule for both values
+      # Otherwise, automatically create a rule for both values
       elif(n_prev != n_cur or ppn_prev != ppn_cur):
         break_points[feature_space[i-1,:].astype('int').tobytes()] = s_prev
         break_points[feature_space[i,:].astype('int').tobytes()] = s_cur
@@ -75,7 +102,7 @@ def get_rules(feature_space, selections, algs, rf):
   return break_points
 
 
-#Converts the highest values to "any"
+# Converts the highest values to "any"
 def any_helper(json_dict):
   if(not json_dict):
     return
@@ -88,7 +115,7 @@ def any_helper(json_dict):
   for nested_dict in json_dict:
     any_helper(json_dict[nested_dict])
 
-#Converts rules into a nested dict
+# Converts rules into a nested dict
 def rules_to_dict(collective, rules, algs):
   n = 0
   ppn = 0
@@ -123,19 +150,33 @@ def rules_to_dict(collective, rules, algs):
   any_helper(to_return)
   return to_return
 
+# Wraps the autotuner's selections in the shell if necessary
+def shell_wrapper(collective, autotuner_json_file_data):
+  try:
+    shell = read_collective_shell(collective)
+  except ReadJsonError: # A collective shell does not exist for this collective, return the selections
+    return autotuner_json_file_data
+  
+  if "is_op_built_in=yes" in shell:
+    if "is_commutative=yes" in shell["is_op_built_in=yes"]:
+        shell["is_op_built_in=yes"]["is_commutative=yes"] = autotuner_json_file_data
 
+  return shell
+
+
+# Replaces the collective in the .json file data with the autotuner's selections
 def update_collective(json_file_data, collective, feature_space, rf, algs=None):
   if algs is None:
     algs = read_algs(collective)
 
-  #unnormalize data
+  # Unnormalize data
   y_test = rf.predict(add_algs(feature_space, algs))
   selections = get_selections(y_test, algs)
 
-  #get rules/break points
+  # Get rules/break points
   rules = get_rules(feature_space, selections, algs, rf)
 
-  #integrate into json file
+  # Integrate into json file
   collective_name = "collective=" + collective
   collective_caps = collective.capitalize()
   intra = "comm_type=intra"
@@ -143,6 +184,6 @@ def update_collective(json_file_data, collective, feature_space, rf, algs=None):
     if collective == collective_name:
       for comm_type in json_file_data[collective]:
         if(comm_type == intra):
-          json_file_data[collective][comm_type] = rules_to_dict(collective_caps, rules, algs)
+          json_file_data[collective][comm_type] = shell_wrapper(collective, rules_to_dict(collective_caps, rules, algs))
 
   return json_file_data
