@@ -1,0 +1,32 @@
+{
+    "is_op_built_in=no":
+    {
+        "algorithm=MPIR_Allreduce_intra_recursive_doubling":{}
+    },
+    "is_op_built_in=yes":
+    {
+        "is_commutative=no":
+        {
+            "avg_msg_size<=8":
+            {
+                "algorithm=MPIR_Allreduce_intra_recursive_doubling":{}
+            },
+            "avg_msg_size=any":
+            {
+                "count<pow2":
+                {
+                    "algorithm=MPIR_Allreduce_intra_recursive_doubling":{}
+                },
+                "count=any":
+                {
+                    "algorithm=MPIR_Allreduce_intra_reduce_scatter_allgather":{}
+                }
+            }
+        },
+            "is_commutative=yes":
+        {
+            "replace me":{}
+        }
+    }
+}
+            
