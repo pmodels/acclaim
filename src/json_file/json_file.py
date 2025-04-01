@@ -38,6 +38,7 @@ def read_collective_shell(collective):
     with open(json_path) as json_file:
       json_file_data = json.load(json_file)
   except FileNotFoundError:
+    print(f"Warning: The collective shell file '{json_path}' is not found.")
     raise ReadJsonError()
   except json.JSONDecodeError:
     print(f"Error: The collective shell file '{json_path}' is not a valid JSON file.")
@@ -180,10 +181,10 @@ def update_collective(json_file_data, collective, feature_space, rf, algs=None):
   collective_name = "collective=" + collective
   collective_caps = collective.capitalize()
   intra = "comm_type=intra"
-  for collective in json_file_data:
-    if collective == collective_name:
-      for comm_type in json_file_data[collective]:
+  for json_collective in json_file_data:
+    if json_collective == collective_name:
+      for comm_type in json_file_data[json_collective]:
         if(comm_type == intra):
-          json_file_data[collective][comm_type] = shell_wrapper(collective, rules_to_dict(collective_caps, rules, algs))
+          json_file_data[json_collective][comm_type] = shell_wrapper(collective, rules_to_dict(collective_caps, rules, algs))
 
   return json_file_data

@@ -10,7 +10,7 @@ def main():
   n = int(sys.argv[1])
   ppn = int(sys.argv[2])
   msg_size = int(sys.argv[3])
-  collective = "bcast"
+  collective = str(sys.argv[4])
 
   feature_space, rf = train_model(n, ppn, msg_size, collective)
 
