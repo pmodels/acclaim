@@ -113,7 +113,10 @@ else:
     subprocess.run(["wget", "https://mvapich.cse.ohio-state.edu/download/mvapich/osu-micro-benchmarks-7.5-1.tar.gz"])
     subprocess.run(["mv", "osu-micro-benchmarks-7.5-1.tar.gz", "osu_microbenchmarks"])
     subprocess.run(["tar", "-xzf", "osu_microbenchmarks/osu-micro-benchmarks-7.5-1.tar.gz", "-C", "osu_microbenchmarks", "--strip-components=1"])
-    subprocess.run(["cp", "utils/osu/osu_build.sh", "osu_microbenchmarks"])
+    if args.system == 'aurora':
+        subprocess.run(["cp", "utils/osu/osu_build_aurora.sh", "osu_microbenchmarks/osu_build.sh"])
+    else:
+        subprocess.run(["cp", "utils/osu/osu_build.sh", "osu_microbenchmarks/osu_build.sh"])
     mpicc_path = os.path.join(mpich_path, "bin", "mpicc")
     mpicxx_path = os.path.join(mpich_path, "bin", "mpicxx")
     with new_cd('osu_microbenchmarks'):

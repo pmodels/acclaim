@@ -74,7 +74,12 @@ class TestDataCollect(unittest.TestCase):
     points = np.array([[1, 2, 1, 0],
                        [1, 2, 1, 1],
                        [1, 2, 1, 2]])
-    topo = ConfigManager.get_instance().get_topology()
+    n=1
+    num_processes=n*ConfigManager.get_instance().get_value('settings', 'max_ppn')
+    dummy_topo_instance = ConfigManager.get_instance().get_topology()
+    topo_file = dummy_topo_instance.gen_topology_file(num_processes)
+    topo = dummy_topo_instance.get_topology(topo_file)
+
     result = collect_point_batch("bcast", bcast_algs, points, topo)
     self.assertEqual(result.size, 3)
     self.assertGreater(result[0], 0)

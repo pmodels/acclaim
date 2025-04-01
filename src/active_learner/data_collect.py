@@ -17,12 +17,12 @@ import glob
 from src.user_config.config_manager import ConfigManager
 
 
-# This function uses a Python subprocess to run the benchmark script 
+# This function uses a Python subprocess to run the microbenchmark script 
 def collect_point_runner(name, alg, n, ppn, msg_size, nodefile_path=None):
   n = int(n)
   ppn = int(ppn)
   msg_size = int(msg_size)
-  result = subprocess.run(["./src/active_learner/collect_point_single.sh",
+  result = subprocess.run(["./src/mb_runner/generic_runner.sh",
                            ConfigManager.get_instance().get_value('settings', 'mpich_path'),
                            ConfigManager.get_instance().get_value('settings', 'launcher_path'),
                            ConfigManager.get_instance().get_value('settings', 'osu_path'),
