@@ -11,7 +11,9 @@ The goal of ACCLAiM is to transparently improve the performance of large-scale H
 	* configparser (Tested with v1.3.1)
 	* pathlib (Tested with v1.01)  
 * [MPICH](https://github.com/pmodels/mpich) (Tested with v4.3.0) 
-  * For install instructions, see the MPICH README
+	* For install instructions, see the MPICH README
+* OSU Microbenchmarks (Tested with v7.5.1)
+	* Installed automatically by `setup.py`	
 
 ## Setup
 
