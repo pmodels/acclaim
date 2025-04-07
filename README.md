@@ -6,7 +6,10 @@ The goal of ACCLAiM is to transparently improve the performance of large-scale H
 ## Dependencies
 
 * Python3 (Tested with v3.13)
-	* For specific packages, see Setup
+	* numpy (Tested with v2.1.3)
+ 	* scikit-learn (Tested with v1.5.2)
+	* configparser (Tested with v1.3.1)
+	* pathlib (Tested with v1.01)  
 * [MPICH](https://github.com/pmodels/mpich) (Tested with v4.3.0) 
   * For install instructions, see the MPICH README
 
