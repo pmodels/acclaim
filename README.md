@@ -32,9 +32,111 @@ For `local`, the default is 8, and for `serial`, the default is 64.
 
 `setup.py` checks for all required Python packages and will fail if they are not detected.
 If this occurs, install the requested package and re-run the script.
+If using a virtual environment, you can easily install all the necessary Python packages by running `pip install -r requirements.txt`.
 
 When it completes successfully, `setup.py` creates `config.ini` at the root directory of your repository.
 Review all of the settings and confirm they are correct.
+
+## Using ACCLAiM
+
+### Description
+
+ACCLAiM currently supports tuning for all blocking, regular collectives that have more than one algorithm implemented in MPICH: MPI_Allgather, MPI_Allreduce, MPI_Alltoall, MPI_Bcast, MPI_Reduce, and MPI_Reduce_scatter.
+
+ACCLAiM is an *allocation-time* autotuner, meaning it is invoked in an HPC jobscript (submitted through a workload manager such as SLURM) just before the application is invoked using `mpiexec`.
+Examples are included at the bottom of this section.
+
+ACCLAiM includes 3 `make` commands to perform tuning:
+- **`gen_config_single`**: Tunes a single specified collective
+- **`gen_config_multiple`**: Tunes a list of specified collectives.
+- **`gen_config_all`**: Tunes all supported collectives. Note that this command is not recommended; instead, profile your application using a tool such as [mpiP](https://github.com/LLNL/mpiP) and only tune the most common collectives in your workload.
+
+These commands have the following shared arguments:
+- **`N`**: Maximum number of nodes (i.e., number of nodes in the job).
+- **`PPN`**: Maximum number of processes per node (i.e., number of processes per node used in the job).
+- **`MSG_SIZE`**: Largest collective message size to tune. For the best tuning results, we recommend a large size, e.g., 1048576, even if the application only uses small messages.
+- **`SAVE_FILE`**: The location to store the tuned .json file created by ACCLAiM. We recommend creating a separate directory for these tuning files and using the job ID in the name, so simultaneous jobs do not overwrite each other's files.
+
+`gen_config_single` and `gen_config_multiple` have additional arguments to select the collective(s) to tune:
+- **`COLLECTIVE`** (`gen_config_single`): Collective to tune. Specify the collective in all lower case without the `MPI` prefix, e.g., "allreduce" or "reduce_scatter".
+- **`COLLECTIVE_LIST`** (`gen_config_multiple`): List of collectives to tune. Specify the collectives in a comma-separated list using all lower case without the `MPI` prefix, e.g., "allreduce,reduce_scatter,bcast".
+
+These arguments are passed by name following the `make` command.
+To understand how to run these commands, please inspect the `Makefile` and see the examples below.
+
+### Applying the Tuning File
+
+To instruct MPICH to use the new tuning file, pass the path to the file using the `MPIR_CVAR_COLL_SELECTION_TUNING_JSON_FILE` environment variable.
+
+### Examples
+Tuning MPI_Allreduce on ANL Aurora:
+```
+NNODES=`wc -l < $PBS_NODEFILE`
+PPN=12
+PROCS=$(($NNODES * $PPN))
+
+APP_DIR=$(pwd)
+ACCLAIM_PATH=path/to/acclaim
+
+cd $ACCLAIM_PATH
+mkdir -p tuning_jsons
+
+save_file_path=${ACCLAIM_PATH}/tuning_jsons/${PBS_JOBID}.json
+make gen_config_single N=$NNODES PPN=$PPN MSG_SIZE=1048576 COLLECTIVE="allreduce" SAVE_FILE="${save_file_path}"
+
+cd $APP_DIR
+mpiexec \
+    -n $PROCS \
+    -ppn $PPN \
+    -genv MPIR_CVAR_COLL_SELECTION_TUNING_JSON_FILE=${save_file_path} \
+    ...
+```
+
+Tuning MPI_Allreduce and MPI_Bcast on ANL Aurora:
+```
+NNODES=`wc -l < $PBS_NODEFILE`
+PPN=12
+PROCS=$(($NNODES * $PPN))
+
+APP_DIR=$(pwd)
+ACCLAIM_PATH=path/to/acclaim
+
+cd $ACCLAIM_PATH
+mkdir -p tuning_jsons
+
+save_file_path=${ACCLAIM_PATH}/tuning_jsons/${PBS_JOBID}.json
+make gen_config_multiple N=$NNODES PPN=$PPN MSG_SIZE=1048576 COLLECTIVE_LIST="allreduce,bcast" SAVE_FILE="${save_file_path}"
+
+cd $APP_DIR
+mpiexec \
+    -n $PROCS \
+    -ppn $PPN \
+    -genv MPIR_CVAR_COLL_SELECTION_TUNING_JSON_FILE=${save_file_path} \
+    ...
+```
+
+Tuning all collectives on ANL Aurora:
+```
+NNODES=`wc -l < $PBS_NODEFILE`
+PPN=12
+PROCS=$(($NNODES * $PPN))
+
+APP_DIR=$(pwd)
+ACCLAIM_PATH=path/to/acclaim
+
+cd $ACCLAIM_PATH
+mkdir -p tuning_jsons
+
+save_file_path=${ACCLAIM_PATH}/tuning_jsons/${PBS_JOBID}.json
+make gen_config_all N=$NNODES PPN=$PPN MSG_SIZE=1048576 SAVE_FILE="${save_file_path}"
+
+cd $APP_DIR
+mpiexec \
+    -n $PROCS \
+    -ppn $PPN \
+    -genv MPIR_CVAR_COLL_SELECTION_TUNING_JSON_FILE=${save_file_path} \
+    ...
+```
 
 ## Known Issues
 
