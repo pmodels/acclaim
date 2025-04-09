@@ -32,7 +32,7 @@ def collect_point_runner(name, alg, n, ppn, msg_size, nodefile_path=None):
                            str(ppn),
                            str(msg_size),
                            nodefile_path if nodefile_path else ""],
-                           check=True, capture_output=True, text=True).stdoutß
+                           check=True, capture_output=True, text=True).stdout
   result = float(result)
   return result
 
