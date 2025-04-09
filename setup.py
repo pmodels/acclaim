@@ -13,7 +13,7 @@ import configparser
 
 # Function to check if MPICH is installed at the provided path
 def check_mpich_installation(args, mpich_path):
-    libmpi_path = os.path.join(mpich_path, 'lib', 'libmpi.la')
+    libmpi_path = os.path.join(mpich_path, 'lib', 'libmpi.so')
     mpiexec_path = os.path.join(mpich_path, 'bin', 'mpiexec')
     
     # Check if the lib file exists
@@ -78,17 +78,18 @@ args = parser.parse_args()
 mpich_path = args.mpich_path[0]
 
 # Set Max PPN if necessary based on arguments
-if args.system == 'polaris':
-    max_ppn = 64
-elif args.system == 'aurora_xpu':
-    max_ppn = 12 # The most common PPN on Aurora XPU is 12 (1 process per GPU Tile)
-elif args.system == 'aurora':
-    max_ppn = 96 # The most common PPN for CPU-based workloads on Aurora is 96
-elif not args.max_ppn:
-    if args.system == 'local':
-        max_ppn = 8
-    elif args.system == 'serial':
-        max_ppn = 64
+if not args.max_ppn:
+    if args.system == 'polaris':
+        max_ppn = 64 # The most common PPN for CPU-based workloads on Polaris is 64
+    elif args.system == 'aurora_xpu':
+        max_ppn = 12 # The most common PPN on Aurora XPU is 12 (1 process per GPU Tile)
+    elif args.system == 'aurora':
+        max_ppn = 96 # The most common PPN for CPU-based workloads on Aurora is 96
+    elif not args.max_ppn:
+        if args.system == 'local':
+            max_ppn = 8
+        elif args.system == 'serial':
+            max_ppn = 64
 else:
     max_ppn = args.max_ppn
 
