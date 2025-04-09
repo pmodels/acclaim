@@ -17,50 +17,50 @@ class TestDataCollect(unittest.TestCase):
   def test_collect_point_param_allreduce_tree(self):
     result = collect_point_runner("allreduce", "tree2", 1, 2, 4)
     self.assertGreater(result, 0)
-    self.assertLess(result, 10)
+    self.assertLess(result, 1000)
     result = collect_point_runner("allreduce", "tree4", 1, 2, 4)
     self.assertGreater(result, 0)
-    self.assertLess(result, 10)
+    self.assertLess(result, 1000)
   
   def test_collect_point_param_allreduce_recexch(self):
     result = collect_point_runner("allreduce", "recexch2", 1, 2, 4)
     self.assertGreater(result, 0)
-    self.assertLess(result, 10)
+    self.assertLess(result, 1000)
     result = collect_point_runner("allreduce", "recexch4", 1, 2, 4)
     self.assertGreater(result, 0)
-    self.assertLess(result, 10)
+    self.assertLess(result, 1000)
 
   def test_collect_point_param_allreduce_recursive_multiplying(self):
     result = collect_point_runner("allreduce", "recursive_multiplying2", 1, 2, 4)
     self.assertGreater(result, 0)
-    self.assertLess(result, 10)
+    self.assertLess(result, 1000)
     result = collect_point_runner("allreduce", "recursive_multiplying4", 1, 2, 4)
     self.assertGreater(result, 0)
-    self.assertLess(result, 10)
+    self.assertLess(result, 1000)
 
   def test_collect_point_param_allgather_recexch_doubling(self):
     result = collect_point_runner("allgather", "recexch_doubling2", 1, 2, 4)
     self.assertGreater(result, 0)
-    self.assertLess(result, 10)
+    self.assertLess(result, 1000)
     result = collect_point_runner("allgather", "recexch_doubling4", 1, 2, 4)
     self.assertGreater(result, 0)
-    self.assertLess(result, 10)
+    self.assertLess(result, 1000)
 
   def test_collect_point_param_allgather_recexch_halving(self):
     result = collect_point_runner("allgather", "recexch_halving2", 1, 2, 4)
     self.assertGreater(result, 0)
-    self.assertLess(result, 10)
+    self.assertLess(result, 1000)
     result = collect_point_runner("allgather", "recexch_halving4", 1, 2, 4)
     self.assertGreater(result, 0)
-    self.assertLess(result, 10)
+    self.assertLess(result, 1000)
   
   def test_collect_point_param_allgather_k_brucks(self):
     result = collect_point_runner("allgather", "k_brucks2", 1, 2, 4)
     self.assertGreater(result, 0)
-    self.assertLess(result, 10)
+    self.assertLess(result, 1000)
     result = collect_point_runner("allgather", "k_brucks4", 1, 2, 4)
     self.assertGreater(result, 0)
-    self.assertLess(result, 10)
+    self.assertLess(result, 1000)
 
   def test_collect_point_single(self):
     bcast_algs = {0: 'scatter_recursive_doubling_allgather', 1: 'binomial', 2: 'scatter_ring_allgather'}

@@ -64,7 +64,7 @@ def new_cd(x):
 parser = argparse.ArgumentParser(description='Setup the ACCLAiM project.')
 parser.add_argument('mpich_path', type=str, nargs=1, 
                         help = 'The path to the MPICH install directory')
-parser.add_argument('system', type=str, choices = ['polaris', 'aurora', 'local', 'serial'],
+parser.add_argument('system', type=str, choices = ['polaris', 'aurora', 'aurora_xpu', 'local', 'serial'],
                         help = 'The system to setup for parallel scheduling')
 parser.add_argument('max_ppn', type=int, nargs='?',
                         help = 'The maximum processes per node for a single microbenchmark run')
@@ -80,8 +80,10 @@ mpich_path = args.mpich_path[0]
 # Set Max PPN if necessary based on arguments
 if args.system == 'polaris':
     max_ppn = 64
+elif args.system == 'aurora_xpu':
+    max_ppn = 12 # The most common PPN on Aurora XPU is 12 (1 process per GPU Tile)
 elif args.system == 'aurora':
-    max_ppn = 12 # The most common PPN on Aurora is 12 (1 process per GPU Tile)
+    max_ppn = 96 # The most common PPN for CPU-based workloads on Aurora is 96
 elif not args.max_ppn:
     if args.system == 'local':
         max_ppn = 8
@@ -108,15 +110,25 @@ check_mpich_installation(args, mpich_path)
 if os.path.exists("osu_microbenchmarks"):
     print("OSU Microbenchmarks already installed!")
 else:
+    # Download the microbenchmarks or clone them from Github
     os.makedirs("osu_microbenchmarks")
     print("Installing the OSU Microbenchmarks...")
-    subprocess.run(["wget", "https://mvapich.cse.ohio-state.edu/download/mvapich/osu-micro-benchmarks-7.5-1.tar.gz"])
-    subprocess.run(["mv", "osu-micro-benchmarks-7.5-1.tar.gz", "osu_microbenchmarks"])
-    subprocess.run(["tar", "-xzf", "osu_microbenchmarks/osu-micro-benchmarks-7.5-1.tar.gz", "-C", "osu_microbenchmarks", "--strip-components=1"])
+    if args.system == 'aurora_xpu':
+        subprocess.run(["git", "clone", "https://github.com/mjwilkins18/aurora_osu_microbenchmarks.git", "osu_microbenchmarks"])
+    else:
+        subprocess.run(["wget", "https://mvapich.cse.ohio-state.edu/download/mvapich/osu-micro-benchmarks-7.5-1.tar.gz"])
+        subprocess.run(["mv", "osu-micro-benchmarks-7.5-1.tar.gz", "osu_microbenchmarks"])
+        subprocess.run(["tar", "-xzf", "osu_microbenchmarks/osu-micro-benchmarks-7.5-1.tar.gz", "-C", "osu_microbenchmarks", "--strip-components=1"])
+    
+    # Copy in the correct build script
     if args.system == 'aurora':
         subprocess.run(["cp", "utils/osu/osu_build_aurora.sh", "osu_microbenchmarks/osu_build.sh"])
+    elif args.system == 'aurora_xpu':
+        subprocess.run(["cp", "utils/osu/osu_build_aurora_xpu.sh", "osu_microbenchmarks/osu_build.sh"])
     else:
         subprocess.run(["cp", "utils/osu/osu_build.sh", "osu_microbenchmarks/osu_build.sh"])
+
+    # Run the build script
     mpicc_path = os.path.join(mpich_path, "bin", "mpicc")
     mpicxx_path = os.path.join(mpich_path, "bin", "mpicxx")
     with new_cd('osu_microbenchmarks'):
@@ -127,6 +139,11 @@ else:
         else:
             raise Exception("Error installing OSU Microbenchmarks.")
 
+# Set the system-specific runner script if necessary
+runner = os.path.join(os.getcwd(), "src/mb_runner/generic_runner.sh")
+if args.system == 'aurora_xpu':
+    runner = os.path.join(os.getcwd(), "src/mb_runner/aurora_xpu_runner.sh")
+
 # Create the temporary directory for nodefiles
 nodefile_dir = os.path.join(os.getcwd(), "_parallel_nodefiles")
 
@@ -136,15 +153,22 @@ if not os.path.exists(nodefile_dir):
 # Write the config file
 config = configparser.ConfigParser()
 
+# Select the algorithms csv
+if args.system == 'aurora' or args.system == 'aurora_xpu':
+    algs_json = os.path.join(os.getcwd(), "utils/mpich/algorithm_config/all_algs_param_aurora.csv")
+else:
+    algs_json = os.path.join(os.getcwd(), "utils/mpich/algorithm_config/all_algs_param.csv")
+
 config['settings'] = {
     'acclaim_root': os.getcwd(),
     'mpich_path': mpich_path,
     'launcher_path': launcher_path,
     'osu_path': os.path.join(os.getcwd(), "osu_microbenchmarks/build/libexec/osu-micro-benchmarks/mpi/collective"),
+    'runner': runner,
     'system': args.system,
     'max_ppn': max_ppn,
     'num_initial_points': args.num_initial_points,
-    'algs_json': os.path.join(os.getcwd(), "utils/mpich/algorithm_config/all_algs.csv"),
+    'algs_json': algs_json,
 }
 
 print("Writing the config.ini file...")
