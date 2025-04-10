@@ -13,11 +13,12 @@ import configparser
 
 # Function to check if MPICH is installed at the provided path
 def check_mpich_installation(args, mpich_path):
-    libmpi_path = os.path.join(mpich_path, 'lib', 'libmpi.so')
+    libmpi_path_1 = os.path.join(mpich_path, 'lib', 'libmpi.so')
+    libmpi_path_2 = os.path.join(mpich_path, 'lib', 'libmpi.la')
     mpiexec_path = os.path.join(mpich_path, 'bin', 'mpiexec')
     
     # Check if the lib file exists
-    if not os.path.exists(libmpi_path):
+    if not os.path.exists(libmpi_path_1) and not os.path.exists(libmpi_path_2):
         # Throw a FileNotFoundError exception with a message if the file does not exist
         raise FileNotFoundError("MPICH cannot be found at the specified location.")
 
