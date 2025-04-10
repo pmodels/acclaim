@@ -69,7 +69,7 @@ split_string "$alg" alg_name alg_param
 
 export MPIR_CVAR_${coll_name_upper}_INTRA_ALGORITHM="$alg_name"
 if [[ -n $alg_param ]]; then
-    if [[ $alg_name ==  "recexch" || $alg_name == "recexch_doubling" || $alg_name == "recexch_halving" ]]; then
+    if [[ $alg_name ==  "recexch" || $alg_name == "recexch_doubling" || $alg_name == "recexch_halving" || $alg_name == "k_reduce_scatter_allgather" ]]; then
       export MPIR_CVAR_${coll_name_upper}_RECEXCH_KVAL="$alg_param"
     fi
     if [[ $alg_name ==  "tree" ]]; then

@@ -5,7 +5,7 @@ import json
 import numpy as np
 from src.active_learner.algs import read_algs, add_algs
 from src.user_config.config_manager import ConfigManager
-from src.json_file.param_algs_to_json import split_param_alg, get_param_rule
+from src.json_file.param_algs_to_json import split_param_alg, get_param_rules
 from collections import OrderedDict
 
 # Custom exception class for json read errors
@@ -145,8 +145,8 @@ def rules_to_dict(collective, rules, algs):
       if param_value is None:
         cur_comm_ppn_dict["avg_msg_size<=" + str(msg_size)] = {"algorithm=MPIR_" + collective + "_intra_" + alg_str: {}}
       else:
-        param_rule = get_param_rule(collective, alg_str, param_value)
-        cur_comm_ppn_dict["avg_msg_size<=" + str(msg_size)] = {"algorithm=MPIR_" + collective + "_intra_" + alg_str: {param_rule: {}}}
+        param_rule = get_param_rules(collective, alg_str, param_value)
+        cur_comm_ppn_dict["avg_msg_size<=" + str(msg_size)] = {"algorithm=MPIR_" + collective + "_intra_" + alg_str: param_rule}
 
   any_helper(to_return)
   return to_return

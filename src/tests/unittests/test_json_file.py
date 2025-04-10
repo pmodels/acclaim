@@ -7,7 +7,7 @@ import numpy as np
 from sklearn.ensemble import RandomForestRegressor
 
 from src.json_file.json_file import ReadJsonError, read_generic_json_file, read_collective_shell, get_selections, get_rules, rules_to_dict, shell_wrapper, update_collective
-from src.json_file.param_algs_to_json import split_param_alg, get_param_rule
+from src.json_file.param_algs_to_json import split_param_alg, get_param_rules
 from src.active_learner.algs import read_algs, add_algs
 from src.active_learner.normalizations import undo_preprocess_input
 from src.user_config.config_manager import ConfigManager
@@ -101,29 +101,32 @@ class TestJson(unittest.TestCase):
     self.assertEqual(result[0], "recursive_multiplying")
     self.assertEqual(result[1], 16)
 
-  def test_get_param_rule(self):
+  def test_get_param_rules(self):
     collective = "allreduce"
     alg_str = "recursive_multiplying"
     param_value = 2
-    result = get_param_rule(collective, alg_str, param_value)
-    self.assertEqual(result, "k=2")
+    result = get_param_rules(collective, alg_str, param_value)
+    self.assertEqual(result, {"k=2": {}})
     alg_str = "tree"
-    result = get_param_rule(collective, alg_str, param_value)
-    self.assertEqual(result, "k=2")
+    result = get_param_rules(collective, alg_str, param_value)
+    self.assertEqual(result, {"k=2": {}, "buffer_per_child=0": {}, "chunk_size=0": {}, "tree_type=knomial_1": {}})
     alg_str = "recexch"
-    result = get_param_rule(collective, alg_str, param_value)
-    self.assertEqual(result, "k=2")
+    result = get_param_rules(collective, alg_str, param_value)
+    self.assertEqual(result, {"k=2": {}, "single_phase_recv=0": {}})
+    alg_str = "k_reduce_scatter_allgather"
+    result = get_param_rules(collective, alg_str, param_value)
+    self.assertEqual(result, {"k=2": {}, "single_phase_recv=0": {}})
     alg_str = "recexch_doubling"
-    result = get_param_rule(collective, alg_str, param_value)
-    self.assertEqual(result, "k=2")
+    result = get_param_rules(collective, alg_str, param_value)
+    self.assertEqual(result, {"k=2": {}, "single_phase_recv=0": {}})
     alg_str = "recexch_halving"
-    result = get_param_rule(collective, alg_str, param_value)
-    self.assertEqual(result, "k=2")
+    result = get_param_rules(collective, alg_str, param_value)
+    self.assertEqual(result, {"k=2": {}, "single_phase_recv=0": {}})
     alg_str = "k_brucks"
-    result = get_param_rule(collective, alg_str, param_value)
-    self.assertEqual(result, "k=2")
+    result = get_param_rules(collective, alg_str, param_value)
+    self.assertEqual(result, {"k=2": {}})
     param_value = None
-    result = get_param_rule(collective, alg_str, param_value)
+    result = get_param_rules(collective, alg_str, param_value)
     self.assertIsNone(result)
   
   def test_rules_to_dict_param(self):
@@ -141,7 +144,10 @@ class TestJson(unittest.TestCase):
     result = list(rules_dict["comm_size=any"]["comm_avg_ppn=any"]["avg_msg_size=any"].keys())
     self.assertEqual(result[0], "algorithm=MPIR_allreduce_intra_tree")
     result = list(rules_dict["comm_size=any"]["comm_avg_ppn=any"]["avg_msg_size=any"]["algorithm=MPIR_allreduce_intra_tree"].keys())
-    self.assertEqual(result[0], "k=3")
+    self.assertEqual(result[0], "buffer_per_child=0")
+    self.assertEqual(result[1], "chunk_size=0")
+    self.assertEqual(result[2], "k=3")
+    self.assertEqual(result[3], "tree_type=knomial_1")
 
   def test_shell_wrapper(self):
     collective="allreduce"
@@ -158,13 +164,19 @@ class TestJson(unittest.TestCase):
     result = list(rules_dict["comm_size=any"]["comm_avg_ppn=any"]["avg_msg_size=any"].keys())
     self.assertEqual(result[0], "algorithm=MPIR_allreduce_intra_tree")
     result = list(rules_dict["comm_size=any"]["comm_avg_ppn=any"]["avg_msg_size=any"]["algorithm=MPIR_allreduce_intra_tree"].keys())
-    self.assertEqual(result[0], "k=3")
+    self.assertEqual(result[0], "buffer_per_child=0")
+    self.assertEqual(result[1], "chunk_size=0")
+    self.assertEqual(result[2], "k=3")
+    self.assertEqual(result[3], "tree_type=knomial_1")
 
     rules_dict = shell_wrapper(collective, rules_to_dict(collective, rules, algs))
     result = list(rules_dict["is_op_built_in=yes"]["is_commutative=yes"]["comm_size=any"]["comm_avg_ppn=any"]["avg_msg_size=any"].keys())
     self.assertEqual(result[0], "algorithm=MPIR_allreduce_intra_tree")
     result = list(rules_dict["is_op_built_in=yes"]["is_commutative=yes"]["comm_size=any"]["comm_avg_ppn=any"]["avg_msg_size=any"]["algorithm=MPIR_allreduce_intra_tree"].keys())
-    self.assertEqual(result[0], "k=3")
+    self.assertEqual(result[0], "buffer_per_child=0")
+    self.assertEqual(result[1], "chunk_size=0")
+    self.assertEqual(result[2], "k=3")
+    self.assertEqual(result[3], "tree_type=knomial_1")
 
   def test_update_collective(self):
     collective="bcast"

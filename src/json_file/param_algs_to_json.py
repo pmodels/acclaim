@@ -22,20 +22,28 @@ def split_param_alg(alg_str):
   return (non_numeric_part, numeric_part)
 
 
-def get_param_rule(collective, alg_str, param_value):
+def get_param_rules(collective, alg_str, param_value):
 
   if param_value is None:
     return None
   
   param_str = None
-  if alg_str ==  "recexch" or alg_str == "recexch_doubling" or alg_str == "recexch_halving":
-    param_str = "k"
+  if alg_str ==  "recexch" or alg_str == "recexch_doubling" or alg_str == "recexch_halving" or alg_str == "k_reduce_scatter_allgather":
+    k_str = "k=" + str(param_value)
+    single_phase_str = "single_phase_recv=0"
+    return {k_str: {}, single_phase_str: {}}
   if alg_str ==  "tree":
-    param_str = "k"
+    k_str = "k=" + str(param_value)
+    buffer_str = "buffer_per_child=0"
+    chunk_size_str = "chunk_size=0"
+    tree_type_str= "tree_type=knomial_1"
+    return {buffer_str: {}, chunk_size_str: {}, k_str: {}, tree_type_str: {}}
   if alg_str ==  "recursive_multiplying":
-    param_str =  "k"
+    k_str = "k=" + str(param_value)
+    return {k_str: {}}
   if alg_str ==  "k_brucks":
-    param_str = "k"
+    k_str = "k=" + str(param_value)
+    return {k_str: {}}
 
   if param_str is None:
     Warning("Param value specified, but param not known")
