@@ -67,11 +67,16 @@ parser.add_argument('mpich_path', type=str, nargs=1,
                         help = 'The path to the MPICH install directory')
 parser.add_argument('system', type=str, choices = ['polaris', 'aurora', 'aurora_xpu', 'local', 'serial'],
                         help = 'The system to setup for parallel scheduling')
-parser.add_argument('max_ppn', type=int, nargs='?',
+parser.add_argument('--max_ppn', type=int, nargs='?',
                         help = 'The maximum processes per node for a single microbenchmark run')
-parser.add_argument('num_initial_points', type=int, nargs='?', default=3,
+parser.add_argument('--num_initial_points', type=int, nargs='?', default=3,
                         help = '''The number of training points to collect in the first iteration. 
-                        Increase for fewer algorithms, reduce for many algorithms.''')
+                        Increase for fewer algorithms, reduce for many algorithms. Default = 3''')
+parser.add_argument('--convergence_threshold', type=float, nargs='?', default=.001,
+                        help = '''The threshold for maximum convergence value over four consecutive 
+                        active learning iterations to successfully exit the active learning process. Default = .001.
+                        Higher values will exit sooner with potentially less-accurate tuning. Lower values will take longer 
+                        to exit but provide more accurate results.''')
 parser.add_argument('--launcher_path', type=str,
                         help = 'The path to the process launcher (if not ${mpich_path}/mpiexec)')
 
@@ -169,6 +174,7 @@ config['settings'] = {
     'runner': runner,
     'system': args.system,
     'max_ppn': max_ppn,
+    'convergence_threshold': args.convergence_threshold,
     'num_initial_points': args.num_initial_points,
     'algs_json': algs_json,
 }
