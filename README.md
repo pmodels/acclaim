@@ -55,7 +55,7 @@ ACCLAiM includes 3 `make` commands to perform tuning:
 These commands have the following shared arguments:
 - **`N`**: Maximum number of nodes (i.e., number of nodes in the job).
 - **`PPN`**: Maximum number of processes per node (i.e., number of processes per node used in the job).
-- **`MSG_SIZE`**: Largest collective message size to tune. For the best tuning results, we recommend a large size, e.g., 1048576, even if the application only uses small messages.
+- **`MSG_SIZE`**: Largest collective message size to tune. For the best tuning results, we recommend a large size, e.g., 1048576, even if the application only uses small messages. On the other hand, unless you are running at very large scale, setting the max message size to few MBs is enough to find the optimal selections. The selection logic is straightforward once you hit the bandwidth bounds of the network.
 - **`SAVE_FILE`**: The location to store the tuned .json file created by ACCLAiM. We recommend creating a separate directory for these tuning files and using the job ID in the name, so simultaneous jobs do not overwrite each other's files.
 
 `gen_config_single` and `gen_config_multiple` have additional arguments to select the collective(s) to tune:
