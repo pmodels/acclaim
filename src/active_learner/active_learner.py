@@ -2,6 +2,8 @@
 
 import numpy as np # type: ignore
 from sklearn.ensemble import RandomForestRegressor # type: ignore
+import time
+from datetime import datetime
 
 from src.active_learner.utils import preprocess_features, unprocess_features
 from src.active_learner.initialization import create_feature_space, get_initial_points
@@ -13,7 +15,7 @@ from src.active_learner.jackknife import jackknife
 from src.active_learner.convergence import convergence_criteria
 from src.user_config.config_manager import ConfigManager
 
-def train_model(n, ppn, msg_size, collective, min_reps=10):
+def train_model(n, ppn, msg_size, collective, min_reps=5):
 
   #Preprocess the input values and generate the feature space
   new_n, new_ppn, new_msg_size = preprocess_features(n, ppn, msg_size)
@@ -39,6 +41,14 @@ def train_model(n, ppn, msg_size, collective, min_reps=10):
   topo_file = dummy_topo_instance.gen_topology_file(num_processes)
   topo = dummy_topo_instance.get_topology(topo_file)
 
+  #setup the timeout timer
+  start_time = time.time()  # Record the start time
+  timeout_seconds = ConfigManager.get_instance().get_value('settings', 'timeout') * 60  # Convert minutes to seconds
+
+  #print time
+  now = datetime.now()
+  formatted_date_time = now.strftime("%Y-%m-%d %H:%M:%S")
+  print("Starting training at:", formatted_date_time)
   ######################################################
   #
   # TRAINING MODEL W/ ACTIVE LEARNING
@@ -105,6 +115,7 @@ def train_model(n, ppn, msg_size, collective, min_reps=10):
     #collect convergence data
     convergence_vals.append(jackknife(rf, X))
 
+    #check for convergence if we have completed >min_reps
     if(len(convergence_vals) < min_reps):
       continue
     else:
@@ -114,6 +125,16 @@ def train_model(n, ppn, msg_size, collective, min_reps=10):
     if(converged):
       print("Active Learning reached convergence, exiting!")
 
+    #check timer for timeout
+    elapsed_time = time.time() - start_time
+    if elapsed_time > timeout_seconds:
+      print("Timeout reached, exiting!")
+      converged = True
+
+  #print end time
+  now = datetime.now()
+  formatted_date_time = now.strftime("%Y-%m-%d %H:%M:%S")
+  print("Ending training at:", formatted_date_time)
   return feature_space, rf
 
 

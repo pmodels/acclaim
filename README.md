@@ -24,8 +24,10 @@ To setup the ACCLAiM tool, run the provided setup script `setup.py` with the fol
   - `aurora` for ANL's Aurora system
   - `serial` disables the parallel scheduler (recommended for all other systems)
   - `local` allows an infinite number of parallel microbenchmarks. Use for testing purposes only.
-- **`[max_ppn]`** (optional): The maximum number of processes per node for a single microbenchmark run.
-- **`[num_initial_points]`** (optional): The number of data points ACCLAiM should randomly sample at the beginning of exploration. We generally recommend against changing this value!
+- **`[--max_ppn]`** (optional): The maximum number of processes per node for a single microbenchmark run.
+- **`[--num_initial_points]`** (optional): The number of data points ACCLAiM should randomly sample at the beginning of exploration. We generally recommend against changing this value!
+- **`[--convergence_threshold]`** (optional): The threshold that cumulative jackknife variance must be under for consecutive iterations to exit. We generally recommend against changing this value!
+- **`[--timeout]`** (optional): The maximum number of minutes before training should exit, even if it has not met the convergence threshold.
 - **`[--launcher_path]`** (optional): The path to the process launcher (e.g., mpiexec). If this argument is not supplied, ACCLAiM will use ${mpich_path}/bin/mpiexec.
 
 Note: The `max_ppn` argument is optional. The provided value will be ignored for `system=polaris`.

@@ -77,6 +77,9 @@ parser.add_argument('--convergence_threshold', type=float, nargs='?', default=.0
                         active learning iterations to successfully exit the active learning process. Default = .001.
                         Higher values will exit sooner with potentially less-accurate tuning. Lower values will take longer 
                         to exit but provide more accurate results.''')
+parser.add_argument('--timeout', type=int, nargs='?', default=30,
+                        help = '''The maximum amount of time in MINUTES before the training process should terminate,
+                        even if it has not yet met the convergence criteria. Default = 30''')
 parser.add_argument('--launcher_path', type=str,
                         help = 'The path to the process launcher (if not ${mpich_path}/mpiexec)')
 
@@ -176,6 +179,7 @@ config['settings'] = {
     'max_ppn': max_ppn,
     'convergence_threshold': args.convergence_threshold,
     'num_initial_points': args.num_initial_points,
+    'timeout': args.timeout,
     'algs_json': algs_json,
 }
 
