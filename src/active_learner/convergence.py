@@ -9,6 +9,7 @@ from src.user_config.config_manager import ConfigManager
 def convergence_criteria(convergence_vals):
 
   threshold = float(ConfigManager.get_instance().get_value('settings', 'convergence_threshold'))
+  print("Checking Convergence! Convergence values: ", convergence_vals, ", Threshold: ", threshold)
   if(abs(convergence_vals[-1] - convergence_vals[-2]) > threshold):
     return False
   if(abs(convergence_vals[-2] - convergence_vals[-3]) > threshold):
