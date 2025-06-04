@@ -48,7 +48,7 @@ def train_model(n, ppn, msg_size, collective, min_reps=5):
   #print time
   now = datetime.now()
   formatted_date_time = now.strftime("%Y-%m-%d %H:%M:%S")
-  print("Starting training at:", formatted_date_time)
+  print("Starting training at: ", formatted_date_time)
   ######################################################
   #
   # TRAINING MODEL W/ ACTIVE LEARNING
@@ -109,7 +109,7 @@ def train_model(n, ppn, msg_size, collective, min_reps=5):
     rf = rf.fit(X_train, y_train)
 
     #
-    # STEP 3: CHECK FOR CONVERGENCE
+    # STEP 3: CHECK FOR EXIT CONDITIONS
     #
 
     #collect convergence data
@@ -124,17 +124,19 @@ def train_model(n, ppn, msg_size, collective, min_reps=5):
 
     if(converged):
       print("Active Learning reached convergence, exiting!")
+    
+    #calculate elapsed time
+    elapsed_time = time.time() - start_time
 
     #check timer for timeout
-    elapsed_time = time.time() - start_time
     if elapsed_time > timeout_seconds:
       print("Timeout reached, exiting!")
       converged = True
 
-  #print end time
+  #print end time + elapsed time
   now = datetime.now()
   formatted_date_time = now.strftime("%Y-%m-%d %H:%M:%S")
-  print("Ending training at:", formatted_date_time)
+  print("Ending training at: ", formatted_date_time, ", Elapsed Time (Seconds): ", elapsed_time)
   return feature_space, rf
 
 
