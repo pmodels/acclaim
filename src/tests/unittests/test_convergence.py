@@ -18,7 +18,7 @@ class TestConvergence(unittest.TestCase):
     self.assertEqual(result, correct)
   
   def test_convergence_criteria_harder(self):
-    vals = [1,1.0005,1.001,1.0015]
+    vals = [1,1.000000001,1.0000000015,1.000000002]
     result = convergence_criteria(vals)
     correct = True
     self.assertEqual(result, correct)

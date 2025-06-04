@@ -29,6 +29,11 @@ class ConfigManager:
            self.get_instance()
        return self.parser[section][key]
     
+    def _set_value(self, section, key, value):
+        if self.parser is None:
+           self.get_instance()
+        self.parser.set(section, key, value)
+    
     def get_topology(self):
         if self.parser is None:
            self.get_instance()

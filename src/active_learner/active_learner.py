@@ -43,7 +43,7 @@ def train_model(n, ppn, msg_size, collective, min_reps=5):
 
   #setup the timeout timer
   start_time = time.time()  # Record the start time
-  timeout_seconds = ConfigManager.get_instance().get_value('settings', 'timeout') * 60  # Convert minutes to seconds
+  timeout_seconds = int(ConfigManager.get_instance().get_value('settings', 'timeout')) * 60  # Convert minutes to seconds
 
   #print time
   now = datetime.now()
