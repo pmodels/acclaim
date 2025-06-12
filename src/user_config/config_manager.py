@@ -30,6 +30,7 @@ class ConfigManager:
             config_dir = pathlib.Path(__file__).parent.parent.parent
         config_path = pathlib.Path(config_dir) / config_name
         self.parser.read(config_path)
+        return self.get_instance()
 
     def get_value(self, section, key):
         if self.parser is None:

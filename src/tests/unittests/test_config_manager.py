@@ -31,7 +31,7 @@ class TestConfigManager(unittest.TestCase):
 
   def test_custom_config(self):
     ConfigManager._instance = None
-    config = ConfigManager.get_instance(pathlib.Path(__file__).parent / "test_configs", 'test_config.ini')
+    config = ConfigManager.get_instance().reinitialize(pathlib.Path(__file__).parent / "test_configs", 'test_config.ini')
 
     # Verify each custom configuration setting
     self.assertEqual(config.get_value('settings', 'root_path'), '/path/to/custom/root')

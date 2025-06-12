@@ -5,10 +5,39 @@ import sys
 import os
 import numpy as np
 import subprocess
-from src.active_learner.data_collect import collect_point_runner, collect_point_single, collect_point_batch
+import shutil
+from src.active_learner.data_collect import collect_point_runner, collect_point_single, collect_point_batch, create_unique_directory
 from src.user_config.config_manager import ConfigManager
 
 class TestDataCollect(unittest.TestCase):
+  def test_create_unique_directory(self):
+      # Create a temporary root path for testing
+      self.test_root_path = os.path.join(ConfigManager.get_instance().get_value('settings', 'acclaim_root'), "src//tests/unittests/test_dir")
+      os.makedirs(self.test_root_path, exist_ok=True)
+
+      # Call the function to create a unique directory
+      unique_dir_path = create_unique_directory(self.test_root_path)
+
+      # Check if the directory was created
+      self.assertTrue(os.path.exists(unique_dir_path))
+
+      # Check if the directory is indeed unique
+      # Create another directory and ensure the paths are different
+      another_unique_dir_path = create_unique_directory(self.test_root_path)
+      self.assertNotEqual(unique_dir_path, another_unique_dir_path)
+
+      # Check if the directory name contains a timestamp and UUID
+      dir_name = os.path.basename(unique_dir_path)
+      parts = dir_name.split('_')
+      self.assertEqual(len(parts), 2)
+      timestamp_parts = parts[0].split('-')
+      self.assertTrue(timestamp_parts[0].isdigit()) # Timestamp part 1
+      self.assertTrue(timestamp_parts[1].isdigit()) # Timestamp part 2
+      self.assertEqual(len(parts[1]), 32)  # UUID part
+
+      # Clean up the temporary root path after tests
+      shutil.rmtree(self.test_root_path)
+  
   def test_collect_point_runner(self):
     result = collect_point_runner("bcast", "binomial", 1, 2, 1)
     self.assertGreater(result, 0)
