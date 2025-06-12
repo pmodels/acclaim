@@ -7,27 +7,35 @@ class ConfigManager:
     _instance = None
 
     @staticmethod
-    def get_instance(config_dir=None, config_name="config.ini"):
+    def get_instance():
         if ConfigManager._instance is None:
-            ConfigManager(config_dir, config_name)
+            ConfigManager()
         return ConfigManager._instance
 
-    def __init__(self, config_dir=None, config_name="config.ini"):
+    def __init__(self):
         if ConfigManager._instance is not None:
             raise Exception("This class is a singleton!")
         else:
             ConfigManager._instance = self
+            config_name="config.ini"
             self.parser = configparser.ConfigParser()
-            if config_dir is None:
-                config_dir = pathlib.Path(__file__).parent.parent.parent
-            config_path = config_dir / config_name
+            config_dir = pathlib.Path(__file__).parent.parent.parent
+            config_path = pathlib.Path(config_dir) / config_name
             self.parser.read(config_path)
         
+    def reinitialize(self, config_dir=None, config_name="config.ini"):
+        if self.parser is None:
+           self.get_instance()
+        if config_dir is None:
+            config_dir = pathlib.Path(__file__).parent.parent.parent
+        config_path = pathlib.Path(config_dir) / config_name
+        self.parser.read(config_path)
 
     def get_value(self, section, key):
-       if self.parser is None:
+        if self.parser is None:
            self.get_instance()
-       return self.parser[section][key]
+
+        return self.parser[section][key]
     
     def _set_value(self, section, key, value):
         if self.parser is None:

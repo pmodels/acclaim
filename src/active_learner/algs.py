@@ -6,7 +6,9 @@ import numpy as np
 from src.user_config.config_manager import ConfigManager
 
 #This function finds all algorithms and returns in an enumerated dictionary
-def read_algs(collective, algs_path=ConfigManager.get_instance().get_value('settings', 'algs_json')):
+def read_algs(collective, algs_path=None):
+  if algs_path == None:
+    algs_path=ConfigManager.get_instance().get_value('settings', 'algs_json')
   with open(algs_path) as csv_file:
     csv_reader = csv.reader(csv_file, delimiter=',')
     algs_dict = None

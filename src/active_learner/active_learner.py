@@ -16,6 +16,7 @@ from src.active_learner.convergence import convergence_criteria
 from src.user_config.config_manager import ConfigManager
 
 def train_model(n, ppn, msg_size, collective, min_reps=5):
+  print(f"train_model: n={n}, ppn={ppn}, msg_size={msg_size}, collective={collective}, min_reps={min_reps}")
 
   #Preprocess the input values and generate the feature space
   new_n, new_ppn, new_msg_size = preprocess_features(n, ppn, msg_size)
@@ -116,7 +117,7 @@ def train_model(n, ppn, msg_size, collective, min_reps=5):
     convergence_vals.append(jackknife(rf, X))
 
     #check for convergence if we have completed >min_reps
-    if(len(convergence_vals) < min_reps):
+    if(len(convergence_vals) < int(min_reps)):
       continue
     else:
       if(convergence_criteria(convergence_vals)):
