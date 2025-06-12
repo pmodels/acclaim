@@ -15,6 +15,8 @@ The goal of ACCLAiM is to transparently improve the performance of large-scale H
 * OSU Microbenchmarks (Tested with v7.5.1)
 	* Installed automatically by `setup.py`	
 
+We recommend creating a Python virtual environment to install the Python dependencies.
+
 ## Setup
 
 To setup the ACCLAiM tool, run the provided setup script `setup.py` with the following arguments:
