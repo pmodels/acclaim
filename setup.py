@@ -65,7 +65,7 @@ def new_cd(x):
 parser = argparse.ArgumentParser(description='Setup the ACCLAiM project.')
 parser.add_argument('mpich_path', type=str, nargs=1, 
                         help = 'The path to the MPICH install directory')
-parser.add_argument('system', type=str, choices = ['polaris', 'aurora', 'aurora_xpu', 'local', 'serial'],
+parser.add_argument('system', type=str, choices = ['polaris', 'aurora_cpu', 'aurora_xpu', 'local', 'serial'],
                         help = 'The system to setup for parallel scheduling')
 parser.add_argument('--max_ppn', type=int, nargs='?',
                         help = 'The maximum processes per node for a single microbenchmark run')
@@ -92,7 +92,7 @@ if not args.max_ppn:
         max_ppn = 64 # The most common PPN for CPU-based workloads on Polaris is 64
     elif args.system == 'aurora_xpu':
         max_ppn = 12 # The most common PPN on Aurora XPU is 12 (1 process per GPU Tile)
-    elif args.system == 'aurora':
+    elif args.system == 'aurora_cpu':
         max_ppn = 96 # The most common PPN for CPU-based workloads on Aurora is 96
     elif not args.max_ppn:
         if args.system == 'local':
@@ -131,7 +131,7 @@ else:
         subprocess.run(["tar", "-xzf", "osu_microbenchmarks/osu-micro-benchmarks-7.5-1.tar.gz", "-C", "osu_microbenchmarks", "--strip-components=1"])
     
     # Copy in the correct build script
-    if args.system == 'aurora':
+    if args.system == 'aurora_cpu':
         subprocess.run(["cp", "utils/osu/osu_build_aurora.sh", "osu_microbenchmarks/osu_build.sh"])
     elif args.system == 'aurora_xpu':
         subprocess.run(["cp", "utils/osu/osu_build_aurora_xpu.sh", "osu_microbenchmarks/osu_build.sh"])
@@ -164,7 +164,7 @@ if not os.path.exists(nodefile_dir):
 config = configparser.ConfigParser()
 
 # Select the algorithms csv
-if args.system == 'aurora' or args.system == 'aurora_xpu':
+if args.system == 'aurora_cpu' or args.system == 'aurora_xpu':
     algs_json = os.path.join(os.getcwd(), "utils/mpich/algorithm_config/all_algs_param_aurora.csv")
 else:
     algs_json = os.path.join(os.getcwd(), "utils/mpich/algorithm_config/all_algs_param.csv")
