@@ -151,8 +151,10 @@ else:
 
 # Set the system-specific runner script if necessary
 runner = os.path.join(os.getcwd(), "src/mb_runner/generic_runner.sh")
+ch4_runner = os.path.join(os.getcwd(), "src/mb_runner/generic_runner_ch4.sh")
 if args.system == 'aurora_xpu':
     runner = os.path.join(os.getcwd(), "src/mb_runner/aurora_xpu_runner.sh")
+    ch4_runner = os.path.join(os.getcwd(), "src/mb_runner/aurora_xpu_runner_ch4.sh")
 
 # Create the temporary directory for nodefiles
 nodefile_dir = os.path.join(os.getcwd(), "_parallel_nodefiles")
@@ -175,6 +177,7 @@ config['settings'] = {
     'launcher_path': launcher_path,
     'osu_path': os.path.join(os.getcwd(), "osu_microbenchmarks/build/libexec/osu-micro-benchmarks/mpi/collective"),
     'runner': runner,
+    'ch4_runner': ch4_runner,
     'system': args.system,
     'max_ppn': max_ppn,
     'convergence_threshold': args.convergence_threshold,

@@ -20,6 +20,9 @@ system_test:
 gen_config_single:
 	$(PYTHON) -m src.gen_config.gen_config_single $(N) $(PPN) $(MSG_SIZE) $(COLLECTIVE) $(SAVE_FILE)
 
+gen_config_single_ch4:
+	$(PYTHON) -m src.gen_config.gen_config_single_ch4 $(N) $(PPN) $(MSG_SIZE) $(COLLECTIVE) $(SAVE_FILE)
+
 gen_config_multiple:
 	$(PYTHON) -m src.gen_config.gen_config_multiple $(N) $(PPN) $(MSG_SIZE) $(COLLECTIVE_LIST) $(SAVE_FILE)
 

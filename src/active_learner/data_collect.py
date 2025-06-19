@@ -25,7 +25,14 @@ def collect_point_runner(name, alg, n, ppn, msg_size, nodefile_path=None):
   n = int(n)
   ppn = int(ppn)
   msg_size = int(msg_size)
-  result = subprocess.run([ConfigManager.get_instance().get_value('settings', 'runner'),
+
+  if "_ch4" == name[-4:]:
+    runner =ConfigManager.get_instance().get_value('settings', 'ch4_runner')
+    name = name[:-4]
+  else:
+    runner = ConfigManager.get_instance().get_value('settings', 'runner')
+
+  result = subprocess.run([runner,
                            ConfigManager.get_instance().get_value('settings', 'mpich_path'),
                            ConfigManager.get_instance().get_value('settings', 'launcher_path'),
                            ConfigManager.get_instance().get_value('settings', 'osu_path'),

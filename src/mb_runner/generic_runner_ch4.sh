@@ -67,27 +67,23 @@ alg_name=""
 alg_param=""
 split_string "$alg" alg_name alg_param
 
-export MPIR_CVAR_${coll_name_upper}_INTRA_ALGORITHM="$alg_name"
-if [[ -n $alg_param ]]; then
-    if [[ $alg_name ==  "recexch" || $alg_name == "recexch_doubling" || $alg_name == "recexch_halving" || $alg_name == "k_reduce_scatter_allgather" ]]; then
-      export MPIR_CVAR_${coll_name_upper}_RECEXCH_KVAL="$alg_param"
-    fi
-    if [[ $alg_name ==  "tree" ]]; then
-      export MPIR_CVAR_${coll_name_upper}_TREE_KVAL="$alg_param"
-    fi
-    if [[ $alg_name ==  "recursive_multiplying" ]]; then
-      export MPIR_CVAR_${coll_name_upper}_RECURSIVE_MULTIPLYING_KVAL="$alg_param"
-    fi
-    if [[ $alg_name ==  "k_brucks" ]]; then
-      export MPIR_PARAM_${coll_name_upper}_BRUCKS_KVAL="$alg_param"
-    fi
-
+if [[ $alg_name ==  "alpha" ]]; then
+      export MPIR_CVAR_${coll_name_upper}__COMPOSITION=1
+fi
+if [[ $alg_name ==  "beta" ]]; then
+      export MPIR_CVAR_${coll_name_upper}__COMPOSITION=2
+fi
+if [[ $alg_name ==  "gamma" ]]; then
+      export MPIR_CVAR_${coll_name_upper}__COMPOSITION=3
+fi
+if [[ $alg_name ==  "delta" ]]; then
+      export MPIR_CVAR_${coll_name_upper}__COMPOSITION=4
 fi
 
-#echo ${launcher_path} -f $nodefile -n $processes -ppn $ppn -genv LD_LIBRARY_PATH=${mpich_path}/lib:$LD_LIBRARY_PATH ${osu_path}/${test_name} -m "$msg_size":"$msg_size_plus"
+# echo ${launcher_path} -f $nodefile -n $processes -ppn $ppn -genv LD_LIBRARY_PATH=${mpich_path}/lib:$LD_LIBRARY_PATH ${osu_path}/${test_name} -m "$msg_size":"$msg_size_plus"
 
 if [ -z "$nodefile" ]; then
-    ${launcher_path} -n $processes -ppn $ppn -genv MPIR_CVAR_DEVICE_COLLECTIVES=none -genv LD_LIBRARY_PATH=${mpich_path}/lib:$LD_LIBRARY_PATH ${osu_path}/${test_name} -m "$msg_size":"$msg_size_plus" | awk -v nodes="$n" -v ppn="$ppn" -v name="$test_name" -v alg=$alg\
+    ${launcher_path} -n $processes -ppn $ppn -genv MPIR_CVAR_DEVICE_COLLECTIVES=all -genv LD_LIBRARY_PATH=${mpich_path}/lib:$LD_LIBRARY_PATH ${osu_path}/${test_name} -m "$msg_size":"$msg_size_plus" | awk -v nodes="$n" -v ppn="$ppn" -v name="$test_name" -v alg=$alg\
         '! /#/ && NF {if($2 != ""){print name"\t"nodes"\t"ppn"\t"alg"\t"$1"\t"$2"\t"$3"\t"$4} else{print name"\t"nodes"\t"ppn"\t"alg"\t1\t"$1}}' \
         | awk -v test="$test_name" -v alg="$alg" -v node="$n" -v proc="$ppn" -v msg_size="$msg_size" '{
             if($1 == test && $2 == node && $3 == proc && $4 == alg && $5 == msg_size){
@@ -97,7 +93,7 @@ if [ -z "$nodefile" ]; then
         } 
         END {if(count){print total/count}}'
 else
-    ${launcher_path} --hostfile $nodefile -n $processes -ppn $ppn -genv MPIR_CVAR_DEVICE_COLLECTIVES=none -genv LD_LIBRARY_PATH=${mpich_path}/lib:$LD_LIBRARY_PATH ${osu_path}/${test_name} -m "$msg_size":"$msg_size_plus" | awk -v nodes="$n" -v ppn="$ppn" -v name="$test_name" -v alg=$alg\
+    ${launcher_path} --hostfile $nodefile -n $processes -ppn $ppn -genv MPIR_CVAR_DEVICE_COLLECTIVES=all -genv LD_LIBRARY_PATH=${mpich_path}/lib:$LD_LIBRARY_PATH ${osu_path}/${test_name} -m "$msg_size":"$msg_size_plus" | awk -v nodes="$n" -v ppn="$ppn" -v name="$test_name" -v alg=$alg\
         '! /#/ && NF {if($2 != ""){print name"\t"nodes"\t"ppn"\t"alg"\t"$1"\t"$2"\t"$3"\t"$4} else{print name"\t"nodes"\t"ppn"\t"alg"\t1\t"$1}}' \
         | awk -v test="$test_name" -v alg="$alg" -v node="$n" -v proc="$ppn" -v msg_size="$msg_size" '{
             if($1 == test && $2 == node && $3 == proc && $4 == alg && $5 == msg_size){

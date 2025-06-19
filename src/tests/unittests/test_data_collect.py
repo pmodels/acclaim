@@ -91,10 +91,25 @@ class TestDataCollect(unittest.TestCase):
     self.assertGreater(result, 0)
     self.assertLess(result, 1000)
 
+  def test_collect_point_param_allreduce_ch4_alpha(self):
+    result = collect_point_runner("allreduce_ch4", "alpha", 1, 2, 4)
+    self.assertGreater(result, 0)
+    self.assertLess(result, 1000)
+    result = collect_point_runner("allreduce_ch4", "alpha", 1, 2, 4)
+    self.assertGreater(result, 0)
+    self.assertLess(result, 1000)
+
   def test_collect_point_single(self):
     bcast_algs = {0: 'scatter_recursive_doubling_allgather', 1: 'binomial', 2: 'scatter_ring_allgather'}
     point = [1, 2, 1, 1]
     result = collect_point_single("bcast", bcast_algs, point)
+    self.assertGreater(result, 0)
+    self.assertLess(result, 10)
+
+  def test_collect_point_single_ch4(self):
+    allreduce_algs = {0: 'alpha', 1: 'beta'}
+    point = [1, 2, 4, 1]
+    result = collect_point_single("allreduce_ch4", allreduce_algs, point)
     self.assertGreater(result, 0)
     self.assertLess(result, 10)
 

@@ -28,6 +28,22 @@ def read_generic_json_file():
   
   return json_file_data
 
+# This function reads the original/generic .json file currently used in MPICH *for ch4 device tuning* and returns it as a mutable Python object (nested dictionaries)
+def read_generic_json_file_ch4():
+  root_path = ConfigManager.get_instance().get_value('settings', 'acclaim_root')
+  json_path = root_path + '/utils/mpich/algorithm_config/ch4_generic.json'
+  try:
+    with open(json_path) as json_file:
+      json_file_data = json.load(json_file)
+  except FileNotFoundError:
+    print(f"Error: The default .json file '{json_path}' was not found.")
+    raise ReadJsonError()
+  except json.JSONDecodeError:
+    print(f"Error: The default .json file '{json_path}' is not a valid JSON file.")
+    raise ReadJsonError()
+  
+  return json_file_data
+
 # Reads the "shell" (default selections for edge cases that surround the autotuned selections) from the .json file and returns it as a mutable Python object
 
 
@@ -110,6 +126,8 @@ def any_helper(json_dict):
   last_key = list(json_dict.keys())[-1]
   if(last_key[:9] == "algorithm"):
     return
+  elif last_key[:11] == "composition":
+    return
   new_key = last_key[:last_key.find('=') - 1] + "=any"
   json_dict[new_key] = json_dict.pop(last_key)
  
@@ -124,6 +142,14 @@ def rules_to_dict(collective, rules, algs):
   to_return = OrderedDict()
   cur_comm_size_dict = OrderedDict()
   cur_comm_ppn_dict = OrderedDict()
+
+  mpi_prefix = "MPIR_"
+  alg_prefix="algorithm="
+  if "_ch4" in collective:
+    collective = collective[:-4]
+    mpi_prefix = "MPIDI_"
+    alg_prefix="composition="
+
   for feature_set_bytes in rules.keys():
     feature_set = np.frombuffer(feature_set_bytes, dtype=int)
     feature_set = 2 ** (feature_set - 1)
@@ -142,11 +168,15 @@ def rules_to_dict(collective, rules, algs):
       msg_size = feature_set[2]
       rule_alg_str = algs[rules[feature_set_bytes]]
       alg_str, param_value = split_param_alg(rule_alg_str)
+      if collective == "Allgather" or collective == "Reduce_scatter":
+        msg_size_str = "total_msg_size"
+      else:
+        msg_size_str = "avg_msg_size"
       if param_value is None:
-        cur_comm_ppn_dict["avg_msg_size<=" + str(msg_size)] = {"algorithm=MPIR_" + collective + "_intra_" + alg_str: {}}
+        cur_comm_ppn_dict[msg_size_str + "<=" + str(msg_size)] = {alg_prefix + mpi_prefix + collective + "_intra_" + alg_str: {}}
       else:
         param_rule = get_param_rules(collective, alg_str, param_value)
-        cur_comm_ppn_dict["avg_msg_size<=" + str(msg_size)] = {"algorithm=MPIR_" + collective + "_intra_" + alg_str: param_rule}
+        cur_comm_ppn_dict[msg_size_str + "<=" + str(msg_size)] = {alg_prefix + mpi_prefix + collective + "_intra_" + alg_str: param_rule}
 
   any_helper(to_return)
   return to_return
@@ -158,15 +188,34 @@ def shell_wrapper(collective, autotuner_json_file_data):
   except ReadJsonError: # A collective shell does not exist for this collective, return the selections
     return autotuner_json_file_data
   
-  if "is_op_built_in=yes" in shell:
-    if "is_commutative=yes" in shell["is_op_built_in=yes"]:
-        shell["is_op_built_in=yes"]["is_commutative=yes"] = autotuner_json_file_data
+  # Perform an iterative DFS to find "replace me" and replace it
+
+  # Initialize a stack with the shell dictionary
+  stack = [shell]
+
+  while stack:
+      # Pop the last dictionary from the stack
+      current_dict = stack.pop()
+
+      # Iterate over a list of keys to avoid modifying the dictionary during iteration
+      for key in list(current_dict.keys()):
+          value = current_dict[key]
+
+          if key == "replace me":
+              # Remove the key and add new key-value pairs from autotuner_json_file_data
+              del current_dict[key]
+              current_dict.update(autotuner_json_file_data)
+
+          elif isinstance(value, dict):
+              # If the value is a dictionary, add it to the stack for further exploration
+              stack.append(value)
 
   return shell
 
 
 # Replaces the collective in the .json file data with the autotuner's selections
 def update_collective(json_file_data, collective, feature_space, rf, algs=None):
+
   if algs is None:
     algs = read_algs(collective)
 
@@ -179,6 +228,8 @@ def update_collective(json_file_data, collective, feature_space, rf, algs=None):
 
   # Integrate into json file
   collective_name = "collective=" + collective
+  if collective_name[-4:] == "_ch4":
+    collective_name = collective_name[:-4]
   collective_caps = collective.capitalize()
   intra = "comm_type=intra"
   for json_collective in json_file_data:
