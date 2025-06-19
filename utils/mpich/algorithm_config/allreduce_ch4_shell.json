@@ -1,0 +1,35 @@
+{
+    "comm_hierarchy=parent":
+    {
+        "is_commutative=yes":
+        {
+            "comm_size=node_comm_size":
+            {
+                "composition=MPIDI_Allreduce_intra_composition_gamma":{}
+            },
+            "replace me":{}
+        },
+        "is_commutative=no":
+        {
+            "comm_size=node_comm_size":
+            {
+                "composition=MPIDI_Allreduce_intra_composition_gamma":{}
+            },
+            "comm_size=any":
+            {
+                "composition=MPIDI_Allreduce_intra_composition_beta":{}
+            }
+        }
+    },
+    "comm_hierarchy=any":
+    {
+        "comm_size=node_comm_size":
+        {
+            "composition=MPIDI_Allreduce_intra_composition_gamma":{}
+        },
+        "comm_size=any":
+        {
+            "composition=MPIDI_Allreduce_intra_composition_beta":{}
+        }
+    }
+}
