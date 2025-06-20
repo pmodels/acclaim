@@ -3,6 +3,7 @@
 import sys
 import json
 import numpy as np
+import math
 from src.active_learner.algs import read_algs, add_algs
 from src.user_config.config_manager import ConfigManager
 from src.json_file.param_algs_to_json import split_param_alg, get_param_rules
@@ -118,24 +119,8 @@ def get_rules(feature_space, selections, algs, rf):
 
   return break_points
 
-
-# Converts the highest values to "any"
-def any_helper(json_dict):
-  if(not json_dict):
-    return
-  last_key = list(json_dict.keys())[-1]
-  if(last_key[:9] == "algorithm"):
-    return
-  elif last_key[:11] == "composition":
-    return
-  new_key = last_key[:last_key.find('=') - 1] + "=any"
-  json_dict[new_key] = json_dict.pop(last_key)
- 
-  for nested_dict in json_dict:
-    any_helper(json_dict[nested_dict])
-
 # Converts rules into a nested dict
-def rules_to_dict(collective, rules, algs):
+def rules_to_dict(collective, rules, algs, ppn_in):
   n = 0
   ppn = 0
   msg_size = 0
@@ -155,7 +140,7 @@ def rules_to_dict(collective, rules, algs):
     feature_set = 2 ** (feature_set - 1)
     upstream_change = False
     if(feature_set[0] != n):
-      n = feature_set[0]
+      n = feature_set[0] * ppn_in
       cur_comm_size_dict = OrderedDict()
       to_return["comm_size<=" + str(n)] = cur_comm_size_dict
       upstream_change = True
@@ -178,14 +163,22 @@ def rules_to_dict(collective, rules, algs):
         param_rule = get_param_rules(collective, alg_str, param_value)
         cur_comm_ppn_dict[msg_size_str + "<=" + str(msg_size)] = {alg_prefix + mpi_prefix + collective + "_intra_" + alg_str: param_rule}
 
-  any_helper(to_return)
   return to_return
 
-# Wraps the autotuner's selections in the shell if necessary
+# Checks if a shell exists for a collective
+def has_shell_wrapper(collective):
+  try:
+    shell = read_collective_shell(collective)
+  except ReadJsonError: # A collective shell does not exist for this collective, return False
+    return False
+  
+  return True
+
+
 def shell_wrapper(collective, autotuner_json_file_data):
   try:
     shell = read_collective_shell(collective)
-  except ReadJsonError: # A collective shell does not exist for this collective, return the selections
+  except ReadJsonError: # A collective shell does not exist for this collective, return the original selections
     return autotuner_json_file_data
   
   # Perform an iterative DFS to find "replace me" and replace it
@@ -198,7 +191,17 @@ def shell_wrapper(collective, autotuner_json_file_data):
       current_dict = stack.pop()
 
       # Iterate over a list of keys to avoid modifying the dictionary during iteration
+      items = list(current_dict.items())
+      index = next((i for i, (k, v) in enumerate(items) if k == "replace me"), None)
+
+      if index is not None:
+        # Remove the old key-value pair
+        items.pop(index)
+        # Insert the new key-value pair at the same position
+        items.insert(index, autotuner_json_file_data)
+
       for key in list(current_dict.keys()):
+      
           value = current_dict[key]
 
           if key == "replace me":
@@ -212,9 +215,46 @@ def shell_wrapper(collective, autotuner_json_file_data):
 
   return shell
 
+# Adds the "any" values for values above the tuned range 
+def any_helper(json_dict):
+  if(not json_dict):
+    return
+  last_key = list(json_dict.keys())[-1]
+  if(last_key[:9] == "algorithm"):
+    return
+  elif last_key[:11] == "composition":
+    return
+  new_key = last_key[:last_key.find('=') - 1] + "=any"
+  json_dict[new_key] = json_dict.pop(last_key)
+ 
+  for nested_dict in json_dict:
+    any_helper(json_dict[nested_dict])
+
+# Sorts the keys from most to least restrictive
+def sort_nested_dict(json_file_data):
+    # Helper function to determine the sort order of keys
+    def sort_key(key):
+        if key.endswith('=node_comm_size'):
+            return (0, key)  # Highest priority
+        elif key.endswith('=any'):
+            return (2, key)  # Lowest priority
+        else:
+            return (1, key)  # Normal priority
+
+    # Sort the dictionary keys based on the custom sort order
+    sorted_dict = {}
+    for key in sorted(json_file_data.keys(), key=sort_key):
+        value = json_file_data[key]
+        if isinstance(value, dict):
+            # Recursively sort nested dictionaries
+            sorted_dict[key] = sort_nested_dict(value)
+        else:
+            sorted_dict[key] = value
+    
+    return sorted_dict
 
 # Replaces the collective in the .json file data with the autotuner's selections
-def update_collective(json_file_data, collective, feature_space, rf, algs=None):
+def update_collective(json_file_data, collective, ppn, feature_space, rf, algs=None):
 
   if algs is None:
     algs = read_algs(collective)
@@ -235,7 +275,14 @@ def update_collective(json_file_data, collective, feature_space, rf, algs=None):
   for json_collective in json_file_data:
     if json_collective == collective_name:
       for comm_type in json_file_data[json_collective]:
-        if(comm_type == intra):
-          json_file_data[json_collective][comm_type] = shell_wrapper(collective, rules_to_dict(collective_caps, rules, algs))
+        if comm_type == intra:
+          if has_shell_wrapper(collective):
+            new_json_data = rules_to_dict(collective_caps, rules, algs, ppn)
+            any_helper(new_json_data)
+            json_file_data[json_collective][comm_type] = shell_wrapper(collective, sort_nested_dict(new_json_data))
+          else:
+            new_json_data = rules_to_dict(collective_caps, rules, algs, ppn)
+            any_helper(new_json_data)
+            json_file_data[json_collective][comm_type] = sort_nested_dict(new_json_data)
 
   return json_file_data

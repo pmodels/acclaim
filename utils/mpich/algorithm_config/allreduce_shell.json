@@ -25,7 +25,22 @@
         },
             "is_commutative=yes":
         {
-            "replace me":{}
+            "replace me":{},
+            "comm_size=any": {
+                "comm_avg_ppn=any": {
+                    "avg_msg_size=any":
+                    {
+                        "count<pow2":
+                        {
+                            "algorithm=MPIR_Allreduce_intra_recursive_doubling":{}
+                        },
+                        "count=any":
+                        {
+                            "algorithm=MPIR_Allreduce_intra_reduce_scatter_allgather":{}
+                        }
+                    }
+                }
+            }        
         }
     }
 }

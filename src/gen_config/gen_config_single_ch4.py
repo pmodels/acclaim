@@ -28,7 +28,7 @@ def main():
   collective_ch4 = collective + "_ch4"
   json_file_data_ch4 = read_generic_json_file_ch4()
   feature_space_ch4, rf_ch4 = train_model(n, ppn, msg_size, collective_ch4)
-  json_file_data_ch4 = update_collective(json_file_data_ch4, collective_ch4, feature_space_ch4, rf_ch4)
+  json_file_data_ch4 = update_collective(json_file_data_ch4, collective_ch4, ppn, feature_space_ch4, rf_ch4)
 
   with open(save_file, 'w+') as f:
     json.dump(json_file_data_ch4, f, indent=2)
