@@ -4,13 +4,13 @@ iallreduce,sched_recursive_doubling,sched_reduce_scatter_allgather
 
 scan,smp,recursive_doubling
 
-reduce_scatter,recursive_doubling,recursive_halving,noncommutative,pairwise
+reduce_scatter,recursive_doubling,recursive_halving,pairwise
 
 iscatter,sched_binomial
 
 igatherv,sched_linear
 
-allgather,brucks,recursive_doubling,ring
+allgather,brucks,recursive_doubling,ring,k_brucks2,k_brucks3,k_brucks4,recexch_doubling2,recexch_doubling3,recexch_doubling4,recexch_doubling8,recexch_halving2,recexch_halving3,recexch_halving4,recexch_halving8
 
 exscan,recursive_doubling
 
@@ -40,7 +40,9 @@ ialltoallw,sched_inplace,sched_blocked
 
 gatherv,allcomm_linear
 
-allreduce,recursive_doubling,smp,reduce_scatter_allgather,tree2,tree3,tree4,recursive_multiplying3,recursive_multiplying4,recursive_multiplying8,recursive_multiplying12,recexch4,recexch8,k_reduce_scatter_allgather2,k_reduce_scatter_allgather3,k_reduce_scatter_allgather4,k_reduce_scatter_allgather8
+allreduce,recursive_doubling,smp,reduce_scatter_allgather,tree2,tree3,tree4,recursive_multiplying3,recursive_multiplying4,recursive_multiplying8,recursive_multiplying12,recexch4,recexch8
+
+allreduce_ch4,composition_alpha,composition_beta
 
 ireduce,sched_smp,sched_binomial,sched_reduce_scatter_gather
 
