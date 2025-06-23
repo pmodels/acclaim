@@ -46,8 +46,6 @@ def read_generic_json_file_ch4():
   return json_file_data
 
 # Reads the "shell" (default selections for edge cases that surround the autotuned selections) from the .json file and returns it as a mutable Python object
-
-
 def read_collective_shell(collective):
   root_path = ConfigManager.get_instance().get_value('settings', 'acclaim_root')
   json_path = root_path + f"/utils/mpich/algorithm_config/{collective}_shell.json"
@@ -140,9 +138,9 @@ def rules_to_dict(collective, rules, algs, ppn_in):
     feature_set = 2 ** (feature_set - 1)
     upstream_change = False
     if(feature_set[0] != n):
-      n = feature_set[0] * ppn_in
+      n = feature_set[0]
       cur_comm_size_dict = OrderedDict()
-      to_return["comm_size<=" + str(n)] = cur_comm_size_dict
+      to_return["comm_size<=" + str(n  * ppn_in)] = cur_comm_size_dict
       upstream_change = True
     if(feature_set[1] != ppn or upstream_change):
       ppn = feature_set[1]
@@ -169,7 +167,7 @@ def rules_to_dict(collective, rules, algs, ppn_in):
 def has_shell_wrapper(collective):
   try:
     shell = read_collective_shell(collective)
-  except ReadJsonError: # A collective shell does not exist for this collective, return False
+  except ReadJsonError:
     return False
   
   return True
@@ -224,7 +222,11 @@ def any_helper(json_dict):
     return
   elif last_key[:11] == "composition":
     return
-  new_key = last_key[:last_key.find('=') - 1] + "=any"
+  
+  equals_index = last_key.find('=')
+  if last_key[equals_index - 1] == '<':
+    equals_index -= 1
+  new_key = last_key[:equals_index] + "=any"
   json_dict[new_key] = json_dict.pop(last_key)
  
   for nested_dict in json_dict:
@@ -279,10 +281,13 @@ def update_collective(json_file_data, collective, ppn, feature_space, rf, algs=N
           if has_shell_wrapper(collective):
             new_json_data = rules_to_dict(collective_caps, rules, algs, ppn)
             any_helper(new_json_data)
-            json_file_data[json_collective][comm_type] = shell_wrapper(collective, sort_nested_dict(new_json_data))
+            shell_json_data = shell_wrapper(collective, new_json_data)
+            sorted_json_data = sort_nested_dict(shell_json_data)
+            json_file_data[json_collective][comm_type] = sorted_json_data
           else:
             new_json_data = rules_to_dict(collective_caps, rules, algs, ppn)
             any_helper(new_json_data)
-            json_file_data[json_collective][comm_type] = sort_nested_dict(new_json_data)
+            sorted_json_data = sort_nested_dict(new_json_data)
+            json_file_data[json_collective][comm_type] = sorted_json_data
 
   return json_file_data

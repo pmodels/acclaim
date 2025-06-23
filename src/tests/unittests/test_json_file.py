@@ -224,14 +224,25 @@ class TestJson(unittest.TestCase):
     feature_space = np.array([[1,2,1],
                               [1,2,2],
                               [1,2,3],
+                              [1,2,4],
+                              [1,2,5],
                             ])
     rules = {}
-    rules[feature_space[0,:].astype('int').tobytes()] = 3
+    #rules[feature_space[0,:].astype('int').tobytes()] = 3
+    rules[np.array([1,2,1]).astype('int').tobytes()] = 0
+    rules[np.array([1,2,2]).astype('int').tobytes()] = 1
+    rules[np.array([1,2,3]).astype('int').tobytes()] = 0
+    rules[np.array([1,2,4]).astype('int').tobytes()] = 3
+    rules[np.array([1,2,5]).astype('int').tobytes()] = 0
+
 
     rules_dict = rules_to_dict(collective, rules, algs, 2)
-    result = list(rules_dict["comm_size<=2"]["comm_avg_ppn<=2"]["avg_msg_size<=1"].keys())
+
+    result = list(rules_dict["comm_size<=2"]["comm_avg_ppn<=2"]["avg_msg_size<=2"].keys())
+    self.assertEqual(result[0], "algorithm=MPIR_allreduce_intra_reduce_scatter_allgather")
+    result = list(rules_dict["comm_size<=2"]["comm_avg_ppn<=2"]["avg_msg_size<=8"].keys())
     self.assertEqual(result[0], "algorithm=MPIR_allreduce_intra_tree")
-    result = list(rules_dict["comm_size<=2"]["comm_avg_ppn<=2"]["avg_msg_size<=1"]["algorithm=MPIR_allreduce_intra_tree"].keys())
+    result = list(rules_dict["comm_size<=2"]["comm_avg_ppn<=2"]["avg_msg_size<=8"]["algorithm=MPIR_allreduce_intra_tree"].keys())
     self.assertEqual(result[0], "buffer_per_child=0")
     self.assertEqual(result[1], "chunk_size=0")
     self.assertEqual(result[2], "k=3")
@@ -312,8 +323,8 @@ class TestJson(unittest.TestCase):
     rules[feature_space[0,:].astype('int').tobytes()] = 3
 
     rules_dict = rules_to_dict(collective, rules, algs, 2)
+
     any_helper(rules_dict)
-    print(rules_dict)
 
     result = list(rules_dict["comm_size=any"]["comm_avg_ppn=any"]["avg_msg_size=any"].keys())
     self.assertEqual(result[0], "algorithm=MPIR_allreduce_intra_tree")
@@ -410,7 +421,6 @@ class TestJson(unittest.TestCase):
     json_file_data = update_collective(json_file_data, collective, 4, feature_space, rf)    
     answer = False
 
-    print(json_file_data["collective=bcast"]["comm_type=intra"])
     first_key = next(iter(json_file_data["collective=bcast"]["comm_type=intra"]["comm_size=any"]))
     second_key = next(iter(json_file_data["collective=bcast"]["comm_type=intra"]["comm_size=any"][first_key]))
     to_check = list(json_file_data["collective=bcast"]["comm_type=intra"]["comm_size=any"][first_key][second_key].keys())
@@ -455,7 +465,7 @@ class TestJson(unittest.TestCase):
 
     first_key = next(iter(json_file_data["collective=allreduce"]["comm_type=intra"]["comm_hierarchy=parent"]["is_commutative=yes"]["comm_size=any"]))
     second_key = next(iter(json_file_data["collective=allreduce"]["comm_type=intra"]["comm_hierarchy=parent"]["is_commutative=yes"]["comm_size=any"][first_key]))
-    to_check = list(json_file_data["collective=allreduce"]["comm_type=intra"]["comm_hierarchy=parent"]["is_commutative=yes"]["comm_size<=4"][first_key][second_key].keys())
+    to_check = list(json_file_data["collective=allreduce"]["comm_type=intra"]["comm_hierarchy=parent"]["is_commutative=yes"]["comm_size=any"][first_key][second_key].keys())
     if(to_check[0] == "composition=MPIDI_Allreduce_intra_composition_alpha" or to_check[0] == "composition=MPIDI_Allreduce_intra_composition_beta" or to_check[0] == "composition=MPIDI_Allreduce_intra_composition_delta"):
       answer = True
     self.assertTrue(answer)
