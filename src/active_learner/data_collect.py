@@ -19,32 +19,67 @@ import shutil
 from datetime import datetime
 from src.user_config.config_manager import ConfigManager
 
-
 # This function uses a Python subprocess to run the microbenchmark script 
+def run_mb_runner(name, alg, n, ppn, msg_size, nodefile_path=None):
+    n = int(n)
+    ppn = int(ppn)
+    msg_size = int(msg_size)
+
+    if "_ch4" == name[-4:]:
+        runner = ConfigManager.get_instance().get_value('settings', 'ch4_runner')
+        name = name[:-4]
+    else:
+        runner = ConfigManager.get_instance().get_value('settings', 'runner')
+
+    try:
+        result = subprocess.run([runner,
+                                 ConfigManager.get_instance().get_value('settings', 'mpich_path'),
+                                 ConfigManager.get_instance().get_value('settings', 'launcher_path'),
+                                 ConfigManager.get_instance().get_value('settings', 'osu_path'),
+                                 "osu_" + name,
+                                 alg,
+                                 str(n),
+                                 str(ppn),
+                                 str(msg_size),
+                                 nodefile_path if nodefile_path else ""],
+                                check=True, capture_output=True, text=True)
+        return result.stdout, result.stderr
+    except subprocess.CalledProcessError as e:
+        print("Error executing the Bash script:")
+        print("Parameters:", name, alg, n, ppn, msg_size, nodefile_path)
+        print("STDOUT:", e.stdout)
+        print("STDERR:", e.stderr)
+        raise
+
+# This function parses the output from the runner script
+def parse_runner_output(output, stderr, name, alg, n, ppn, msg_size, nodefile_path=None):
+    total = 0
+    count = 0
+    for line in output.splitlines():
+        # Skip comment lines and empty lines
+        if line.startswith('#') or not line.strip():
+            continue
+        parts = line.split()
+        # Check if the line matches the expected format
+        if len(parts) >= 2 and parts[0] == str(int(msg_size)):
+            total += float(parts[1])
+            count += 1
+    if count > 0:
+        return total / count
+    else:
+        print("Error parsing the microbenchmark output")
+        print("Parameters:", name, alg, n, ppn, msg_size, nodefile_path)
+        print("STDOUT:", output)
+        print("STDERR:", stderr)
+        raise ValueError("Result not found in microbenchmark output.")
+
+
+# This function runs the mb_runner and parses the output, combining the previous two functions
 def collect_point_runner(name, alg, n, ppn, msg_size, nodefile_path=None):
-  n = int(n)
-  ppn = int(ppn)
-  msg_size = int(msg_size)
+    stdout, stderr = run_mb_runner(name, alg, n, ppn, msg_size, nodefile_path)
+    parsed_result = parse_runner_output(stdout, stderr, name, alg, n, ppn, msg_size, nodefile_path)
+    return parsed_result
 
-  if "_ch4" == name[-4:]:
-    runner =ConfigManager.get_instance().get_value('settings', 'ch4_runner')
-    name = name[:-4]
-  else:
-    runner = ConfigManager.get_instance().get_value('settings', 'runner')
-
-  result = subprocess.run([runner,
-                           ConfigManager.get_instance().get_value('settings', 'mpich_path'),
-                           ConfigManager.get_instance().get_value('settings', 'launcher_path'),
-                           ConfigManager.get_instance().get_value('settings', 'osu_path'),
-                           "osu_" + name,
-                           alg,
-                           str(n),
-                           str(ppn),
-                           str(msg_size),
-                           nodefile_path if nodefile_path else ""],
-                           check=True, capture_output=True, text=True).stdout
-  result = float(result)
-  return result
 
 # This function is a wrapper for collect_point_runner that breaks a feature set into parts,
 # looking up the alg name, and undoing the preprocessing

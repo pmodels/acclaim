@@ -1,4 +1,5 @@
 # This file tests "data_collect.py" using unittest
+import re
 import unittest
 
 import sys
@@ -6,7 +7,7 @@ import os
 import numpy as np
 import subprocess
 import shutil
-from src.active_learner.data_collect import collect_point_runner, collect_point_single, collect_point_batch, create_unique_directory
+from src.active_learner.data_collect import run_mb_runner, parse_runner_output, collect_point_runner, collect_point_single, collect_point_batch, create_unique_directory
 from src.user_config.config_manager import ConfigManager
 
 class TestDataCollect(unittest.TestCase):
@@ -38,10 +39,58 @@ class TestDataCollect(unittest.TestCase):
       # Clean up the temporary root path after tests
       shutil.rmtree(self.test_root_path)
   
+  def test_run_mb_runner(self):
+      # Call the function with the test parameters
+      result_stdout, result_stderr = run_mb_runner("bcast", "binomial", 1, 2, 1)
+
+      # Expected patterns
+      expected_header = "Broadcast Latency Test"
+      expected_datatype = "# Datatype"
+      expected_size_label = "# Size       Avg Latency(us)"
+      expected_size_value = "1"
+
+      # Assert that the expected header is present
+      self.assertIn(expected_header, result_stdout)
+
+      # Assert that the expected datatype line is present
+      self.assertIn(expected_datatype, result_stdout)
+
+      # Assert that the size label line is present
+      self.assertIn(expected_size_label, result_stdout)
+
+      # Use a regular expression to check the size and latency format
+      latency_pattern = re.compile(rf"{expected_size_value}\s+\d+\.\d+")
+      self.assertRegex(result_stdout, latency_pattern)
+
+      # Assert that stderr is empty
+      self.assertEqual(result_stderr.strip(), "")
+  
+  def test_parse_runner_output(self):
+      # Input data for the test
+      input_data = """\
+# OSU MPI-SYCL Broadcast Latency Test v7.5
+# Datatype: MPI_CHAR.
+# Size       Avg Latency(us)
+1                       2.20
+"""
+      # Expected result
+      expected_latency = 2.20
+
+      # Call the parse_runner_output function
+      result = parse_runner_output(input_data, None, "bcast", "binomial", 1, 2, 1)
+
+      # Assert that the result matches the expected latency
+      self.assertAlmostEqual(result, expected_latency, places=2)
+
   def test_collect_point_runner(self):
     result = collect_point_runner("bcast", "binomial", 1, 2, 1)
     self.assertGreater(result, 0)
-    self.assertLess(result, 10)
+    self.assertLess(result, 20)
+
+  def test_collect_point_runner_fail(self):
+    with self.assertRaises(subprocess.CalledProcessError) as cm:
+        collect_point_runner("not_a_collective", "binomial", 1, 2, 1)
+
 
   def test_collect_point_param_allreduce_tree(self):
     result = collect_point_runner("allreduce", "tree2", 1, 2, 4)

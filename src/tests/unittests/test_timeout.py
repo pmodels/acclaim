@@ -20,8 +20,8 @@ class TestTimeout(unittest.TestCase):
     collective = 'scatter'
 
     with io.StringIO() as buf, redirect_stdout(buf):
-        feature_space, rf = train_model(n, ppn, msg_size, collective)
-        self.assertIn("Timeout reached, exiting!", buf.getvalue())
+      feature_space, rf = train_model(n, ppn, msg_size, collective)
+      self.assertIn("Timeout reached, exiting!", buf.getvalue())
 
 
 if __name__ == '__main__':

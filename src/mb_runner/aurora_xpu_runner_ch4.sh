@@ -83,23 +83,9 @@ fi
 # echo ${launcher_path} -f $nodefile -n $processes -ppn $ppn -genv LD_LIBRARY_PATH=${mpich_path}/lib:$LD_LIBRARY_PATH ${osu_path}/${test_name} -m "$msg_size":"$msg_size_plus"
 
 if [ -z "$nodefile" ]; then
-    ${launcher_path} -n $processes -ppn $ppn -genv MPIR_CVAR_DEVICE_COLLECTIVES=all -genv LD_LIBRARY_PATH=${mpich_path}/lib:$LD_LIBRARY_PATH ${osu_path}/../../../../../c/get_local_rank ${osu_path}/${test_name} -d sycl -m "$msg_size":"$msg_size_plus" | awk -v nodes="$n" -v ppn="$ppn" -v name="$test_name" -v alg=$alg\
-        '! /#/ && NF {if($2 != ""){print name"\t"nodes"\t"ppn"\t"alg"\t"$1"\t"$2"\t"$3"\t"$4} else{print name"\t"nodes"\t"ppn"\t"alg"\t1\t"$1}}' \
-        | awk -v test="$test_name" -v alg="$alg" -v node="$n" -v proc="$ppn" -v msg_size="$msg_size" '{
-            if($1 == test && $2 == node && $3 == proc && $4 == alg && $5 == msg_size){
-                total+=$6; 
-                count+=1;
-            }
-        } 
-        END {if(count){print total/count}}'
+    ${launcher_path} -n $processes -ppn $ppn -genv MPIR_CVAR_DEVICE_COLLECTIVES=all -genv LD_LIBRARY_PATH=${mpich_path}/lib:$LD_LIBRARY_PATH ${osu_path}/../../../../../c/get_local_rank ${osu_path}/${test_name} -d sycl -m "$msg_size":"$msg_size_plus"
+
 else
-    ${launcher_path} --hostfile $nodefile -n $processes -ppn $ppn -genv MPIR_CVAR_DEVICE_COLLECTIVES=all -genv LD_LIBRARY_PATH=${mpich_path}/lib:$LD_LIBRARY_PATH ${osu_path}/../../../../../c/get_local_rank ${osu_path}/${test_name} -d sycl -m "$msg_size":"$msg_size_plus" | awk -v nodes="$n" -v ppn="$ppn" -v name="$test_name" -v alg=$alg\
-        '! /#/ && NF {if($2 != ""){print name"\t"nodes"\t"ppn"\t"alg"\t"$1"\t"$2"\t"$3"\t"$4} else{print name"\t"nodes"\t"ppn"\t"alg"\t1\t"$1}}' \
-        | awk -v test="$test_name" -v alg="$alg" -v node="$n" -v proc="$ppn" -v msg_size="$msg_size" '{
-            if($1 == test && $2 == node && $3 == proc && $4 == alg && $5 == msg_size){
-                total+=$6; 
-                count+=1;
-            }
-        } 
-        END {if(count){print total/count}}'
+    ${launcher_path} --hostfile $nodefile -n $processes -ppn $ppn -genv MPIR_CVAR_DEVICE_COLLECTIVES=all -genv LD_LIBRARY_PATH=${mpich_path}/lib:$LD_LIBRARY_PATH ${osu_path}/../../../../../c/get_local_rank ${osu_path}/${test_name} -d sycl -m "$msg_size":"$msg_size_plus"
+
 fi
