@@ -49,7 +49,14 @@ def run_mb_runner(name, alg, n, ppn, msg_size, nodefile_path=None):
         print("Parameters:", name, alg, n, ppn, msg_size, nodefile_path)
         print("STDOUT:", e.stdout)
         print("STDERR:", e.stderr)
-        raise
+
+        # Attempt to parse the output even if an error occurred
+        try:
+            parsed_result = parse_runner_output(e.stdout, e.stderr, name, alg, n, ppn, msg_size, nodefile_path)
+            return e.stdout, e.stderr
+        except ValueError:
+            # Raise the original exception if parsing fails
+            raise e
 
 # This function parses the output from the runner script
 def parse_runner_output(output, stderr, name, alg, n, ppn, msg_size, nodefile_path=None):
@@ -76,9 +83,13 @@ def parse_runner_output(output, stderr, name, alg, n, ppn, msg_size, nodefile_pa
 
 # This function runs the mb_runner and parses the output, combining the previous two functions
 def collect_point_runner(name, alg, n, ppn, msg_size, nodefile_path=None):
-    stdout, stderr = run_mb_runner(name, alg, n, ppn, msg_size, nodefile_path)
-    parsed_result = parse_runner_output(stdout, stderr, name, alg, n, ppn, msg_size, nodefile_path)
-    return parsed_result
+    try:
+        stdout, stderr = run_mb_runner(name, alg, n, ppn, msg_size, nodefile_path)
+        parsed_result = parse_runner_output(stdout, stderr, name, alg, n, ppn, msg_size, nodefile_path)
+        return parsed_result
+    except ValueError as e:
+        print("Failed to parse output:", e)
+        raise
 
 
 # This function is a wrapper for collect_point_runner that breaks a feature set into parts,

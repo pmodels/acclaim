@@ -1,6 +1,7 @@
 # This file tests "data_collect.py" using unittest
 import re
 import unittest
+from unittest.mock import patch
 
 import sys
 import os
@@ -91,6 +92,54 @@ class TestDataCollect(unittest.TestCase):
     with self.assertRaises(subprocess.CalledProcessError) as cm:
         collect_point_runner("not_a_collective", "binomial", 1, 2, 1)
 
+  def test_run_mb_runner_with_error_but_valid_output(self):
+      # Simulate the subprocess output and error
+      simulated_stdout = """\
+# OSU MPI-SYCL Reduce_scatter Latency Test v7.5
+# Datatype: MPI_INT.
+# Size       Avg Latency(us)
+65536                 821.05
+"""
+      simulated_stderr = "free(): invalid pointer\nfree(): invalid pointer\n"
+
+      # Mock the subprocess.run method to simulate the error scenario
+      with patch('subprocess.run') as mock_run:
+          mock_run.side_effect = subprocess.CalledProcessError(
+              returncode=1,
+              cmd='mocked_command',
+              output=simulated_stdout,
+              stderr=simulated_stderr
+          )
+
+          # Call the function with the test parameters
+          result_stdout, result_stderr = run_mb_runner("reduce_scatter", "binomial", 1, 2, 65536)
+
+          # Assert that the expected header is present
+          expected_header = "Reduce_scatter Latency Test"
+          self.assertIn(expected_header, result_stdout)
+
+          # Assert that the expected datatype line is present
+          expected_datatype = "# Datatype: MPI_INT."
+          self.assertIn(expected_datatype, result_stdout)
+
+          # Assert that the size label line is present
+          expected_size_label = "# Size       Avg Latency(us)"
+          self.assertIn(expected_size_label, result_stdout)
+
+          # Use a regular expression to check the size and latency format
+          expected_size_value = "65536"
+          latency_pattern = re.compile(rf"{expected_size_value}\s+\d+\.\d+")
+          self.assertRegex(result_stdout, latency_pattern)
+
+          # Assert that stderr contains the simulated error message
+          self.assertIn("free(): invalid pointer", result_stderr)
+
+          # Call the parse_runner_output function to ensure parsing works despite the error
+          result = parse_runner_output(result_stdout, result_stderr, "reduce_scatter", "binomial", 1, 2, 65536)
+
+          # Assert that the parsed result is correct
+          expected_latency = 821.05
+          self.assertAlmostEqual(result, expected_latency, places=2)
 
   def test_collect_point_param_allreduce_tree(self):
     result = collect_point_runner("allreduce", "tree2", 1, 2, 4)
