@@ -7,6 +7,7 @@ import warnings
 import contextlib
 import configparser
 
+
 ###############
 ### HELPERS ###
 ###############
@@ -57,6 +58,7 @@ def new_cd(x):
     finally:
         os.chdir(d)
 
+
 ###################
 ### MAIN SCRIPT ###
 ###################
@@ -82,6 +84,8 @@ parser.add_argument('--timeout', type=int, nargs='?', default=30,
                         even if it has not yet met the convergence criteria. Default = 30''')
 parser.add_argument('--launcher_path', type=str,
                         help = 'The path to the process launcher (if not ${mpich_path}/mpiexec)')
+parser.add_argument('--test_fail_retries', type=int, default=3,
+                        help = 'How many times to retry microbenchmark tests if they fail spuriously')
 
 args = parser.parse_args()
 mpich_path = args.mpich_path[0]
@@ -183,6 +187,7 @@ config['settings'] = {
     'convergence_threshold': args.convergence_threshold,
     'num_initial_points': args.num_initial_points,
     'timeout': args.timeout,
+    'test_fail_retries': args.test_fail_retries,
     'algs_json': algs_json,
 }
 

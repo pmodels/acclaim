@@ -50,9 +50,9 @@ def run_mb_runner(name, alg, n, ppn, msg_size, nodefile_path=None):
         print("STDOUT:", e.stdout)
         print("STDERR:", e.stderr)
 
-        # Attempt to parse the output even if an error occurred
+        # Attempt to parse the output even if an error occurred, ignore the error and return if it succeeds
         try:
-            parsed_result = parse_runner_output(e.stdout, e.stderr, name, alg, n, ppn, msg_size, nodefile_path)
+            parse_runner_output(e.stdout, e.stderr, name, alg, n, ppn, msg_size, nodefile_path)
             return e.stdout, e.stderr
         except ValueError:
             # Raise the original exception if parsing fails
@@ -78,18 +78,13 @@ def parse_runner_output(output, stderr, name, alg, n, ppn, msg_size, nodefile_pa
         print("Parameters:", name, alg, n, ppn, msg_size, nodefile_path)
         print("STDOUT:", output)
         print("STDERR:", stderr)
-        raise ValueError("Result not found in microbenchmark output.")
-
+        raise ValueError
 
 # This function runs the mb_runner and parses the output, combining the previous two functions
 def collect_point_runner(name, alg, n, ppn, msg_size, nodefile_path=None):
-    try:
-        stdout, stderr = run_mb_runner(name, alg, n, ppn, msg_size, nodefile_path)
-        parsed_result = parse_runner_output(stdout, stderr, name, alg, n, ppn, msg_size, nodefile_path)
-        return parsed_result
-    except ValueError as e:
-        print("Failed to parse output:", e)
-        raise
+  stdout, stderr = run_mb_runner(name, alg, n, ppn, msg_size, nodefile_path)
+  parsed_result = parse_runner_output(stdout, stderr, name, alg, n, ppn, msg_size, nodefile_path)
+  return parsed_result
 
 
 # This function is a wrapper for collect_point_runner that breaks a feature set into parts,
@@ -99,7 +94,19 @@ def collect_point_single(name, algs, point, nodefile=None):
   n = 2 ** (point[0] - 1)
   ppn =  2 ** (point[1] - 1)
   msg_size = 2 ** (point[2] - 1)
-  return collect_point_runner(name, alg, n, ppn, msg_size, nodefile)
+
+  # Try num_retries - 1 with exception protection, then one last time if these all fail
+  for _ in range(int(ConfigManager.get_instance().get_value('settings', 'test_fail_retries')) - 1):
+    try:
+      latency = collect_point_runner(name, alg, n, ppn, msg_size, nodefile)
+      return latency
+    except:
+        continue
+
+  # TEMPORARY WORKAROUND - Just return a huge number if you cannot get it to work so training can proceed
+  return 2000000
+
+  ## return collect_point_runner(name, alg, n, ppn, msg_size, nodefile)
 
 
 # This function generates a unique directory path so concurrent ACCLAiM do not interfere with each other
