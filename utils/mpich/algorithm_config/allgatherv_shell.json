@@ -1,0 +1,10 @@
+{
+    "comm_size=pow2":
+    {
+        "replace me":{}
+    },
+    "comm_size=any":
+    {
+        "algorithm=MPIR_Allgatherv_intra_brucks":{}
+    }
+}
