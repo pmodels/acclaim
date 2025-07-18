@@ -18,6 +18,8 @@ def main():
   # Parse the comma-separated collectives into a list
   collectives = collectives_input.split(',')
 
+  json_file_data = read_generic_json_file()
+  
   for collective in collectives:
     feature_space, rf = train_model(n, ppn, msg_size, collective)
     json_file_data = update_collective(json_file_data, collective, ppn, feature_space, rf)
