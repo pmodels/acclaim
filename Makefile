@@ -24,6 +24,9 @@ gen_config_single:
 gen_data_single:
 	$(PYTHON) -m src.gen_config.gen_data_single $(N) $(PPN) $(MSG_SIZE) $(COLLECTIVE) $(DATA_FILE)
 
+gen_config_from_data_single:
+	$(PYTHON) -m src.gen_config.gen_config_from_data_single $(N) $(PPN) $(MSG_SIZE) $(COLLECTIVE) $(DATA_FILE) $(SAVE_FILE)
+
 gen_config_single_ch4:
 	$(PYTHON) -m src.gen_config.gen_config_single_ch4 $(N) $(PPN) $(MSG_SIZE) $(COLLECTIVE) $(SAVE_FILE)
 

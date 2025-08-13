@@ -15,7 +15,7 @@ from src.active_learner.jackknife import jackknife
 from src.active_learner.convergence import convergence_criteria
 from src.user_config.config_manager import ConfigManager
 
-def train_model(n, ppn, msg_size, collective, min_reps=5, dump_data=True, data_file=None):
+def train_model(n, ppn, msg_size, collective, min_reps=5, dump_data=False, data_file=None, X_train_precollect=None, y_train_precollect=None):
   print(f"train_model: n={n}, ppn={ppn}, msg_size={msg_size}, collective={collective}, min_reps={min_reps}")
 
   #Preprocess the input values and generate the feature space
@@ -25,8 +25,8 @@ def train_model(n, ppn, msg_size, collective, min_reps=5, dump_data=True, data_f
   #read algs into a dictionary, initialize X and Y arrays
   algs = read_algs(collective)
   X = add_algs(feature_space, algs)
-  X_train = None
-  y_train = None
+  X_train = X_train_precollect
+  y_train = y_train_precollect
   y_train_nf = None
 
   #initialize variables
@@ -55,94 +55,99 @@ def train_model(n, ppn, msg_size, collective, min_reps=5, dump_data=True, data_f
   # TRAINING MODEL W/ ACTIVE LEARNING
   #
   ######################################################
-  while not (converged):
+  if X_train is None:
+    while not converged:
 
-    #
-    # STEP 1: SELECT TRAINING POINTS AND COLLECT DATA
-    #
+      #
+      # STEP 1: SELECT TRAINING POINTS AND COLLECT DATA
+      #
 
-    #If it is the first iteration, train for default initial points
-    if(first):
-      #Select inital training points
-      initial_points = get_initial_points(feature_space)
+      #If it is the first iteration, train for default initial points
+      if(first):
+        #Select inital training points
+        initial_points = get_initial_points(feature_space)
 
-      #Add all algorithms
-      X_train = add_algs(initial_points, algs)
+        #Add all algorithms
+        X_train = add_algs(initial_points, algs)
+        
+        print("Done initializing")
+
+        #Collect the data
+        new_points_y = collect_point_batch(collective, algs, X_train, topo)
+
+        print("Done collecting first data")
+
+        #Process the results, create y_train/y_train_nf
+        y_train, y_train_nf = normalize_output(new_points_y, len(algs.keys()), norm_type="alg")
+
+        print("First iteration complete")
+        first = False
+
+      #Otherwise, use uncertainty calculations to determine the next point  
+      else:
+        #Calculate uncertainty and select a point
+        new_point_x, new_point_index = point_selection_single(rf, X_train, X)
+        
+        #Retrieve all algorithm versions of the point (all other inputs/features are the same)
+        new_points_x = get_all_algs(new_point_x, algs)
+
+        #Append to X_train
+        X_train = np.vstack([X_train, new_points_x])
+
+        #Collect the data
+        new_points_y = collect_point_batch(collective, algs, new_points_x, topo)
       
-      print("Done initializing")
+        #Process the results, append to y_train/y_train_nf
+        new_y_train, new_y_train_nf = normalize_output(new_points_y, len(algs.keys()), norm_type="alg")
+        y_train = np.append(y_train, new_y_train)
+        y_train_nf = np.append(y_train_nf, new_y_train_nf)
 
-      #Collect the data
-      new_points_y = collect_point_batch(collective, algs, X_train, topo)
-
-      print("Done collecting first data")
-
-      #Process the results, create y_train/y_train_nf
-      y_train, y_train_nf = normalize_output(new_points_y, len(algs.keys()), norm_type="alg")
-
-      print("First iteration complete")
-      first = False
-
-    #Otherwise, use uncertainty calculations to determine the next point  
-    else:
-      #Calculate uncertainty and select a point
-      new_point_x, new_point_index = point_selection_single(rf, X_train, X)
+      #
+      # STEP 2: TRAIN THE MODEL
+      #
       
-      #Retrieve all algorithm versions of the point (all other inputs/features are the same)
-      new_points_x = get_all_algs(new_point_x, algs)
+      #create moodel and fit it to the data
+      rf = RandomForestRegressor()
+      rf = rf.fit(X_train, y_train)
 
-      #Append to X_train
-      X_train = np.vstack([X_train, new_points_x])
+      #
+      # STEP 3: CHECK FOR EXIT CONDITIONS
+      #
 
-      #Collect the data
-      new_points_y = collect_point_batch(collective, algs, new_points_x, topo)
-     
-      #Process the results, append to y_train/y_train_nf
-      new_y_train, new_y_train_nf = normalize_output(new_points_y, len(algs.keys()), norm_type="alg")
-      y_train = np.append(y_train, new_y_train)
-      y_train_nf = np.append(y_train_nf, new_y_train_nf)
+      #collect convergence data
+      convergence_vals.append(jackknife(rf, X))
 
-    #
-    # STEP 2: TRAIN THE MODEL
-    #
-    
-    #create moodel and fit it to the data
+      #check for convergence if we have completed >min_reps
+      if(len(convergence_vals) < int(min_reps)):
+        continue
+      else:
+        if(convergence_criteria(convergence_vals)):
+          converged = True
+
+      if(converged):
+        print("Active Learning reached convergence, exiting!")
+      
+      #calculate elapsed time
+      elapsed_time = time.time() - start_time
+
+      #check timer for timeout
+      if elapsed_time > timeout_seconds:
+        print("Timeout reached, exiting!")
+        converged = True
+      
+  else:
     rf = RandomForestRegressor()
     rf = rf.fit(X_train, y_train)
-
-    #
-    # STEP 3: CHECK FOR EXIT CONDITIONS
-    #
-
-    #collect convergence data
-    convergence_vals.append(jackknife(rf, X))
-
-    #check for convergence if we have completed >min_reps
-    if(len(convergence_vals) < int(min_reps)):
-      continue
-    else:
-      if(convergence_criteria(convergence_vals)):
-        converged = True
-
-    if(converged):
-      print("Active Learning reached convergence, exiting!")
-    
-    #calculate elapsed time
     elapsed_time = time.time() - start_time
-
-    #check timer for timeout
-    if elapsed_time > timeout_seconds:
-      print("Timeout reached, exiting!")
-      converged = True
-
+  
   #print end time + elapsed time
   now = datetime.now()
   formatted_date_time = now.strftime("%Y-%m-%d %H:%M:%S")
   print("Ending training at: ", formatted_date_time, ", Elapsed Time (Seconds): ", elapsed_time)
-
   if dump_data:
       to_print = np.hstack((X_train, y_train[:, np.newaxis]))
       np.savetxt(data_file, to_print, delimiter=',')
-
+  
   return feature_space, rf
 
 
