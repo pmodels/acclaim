@@ -15,7 +15,7 @@ from src.active_learner.jackknife import jackknife
 from src.active_learner.convergence import convergence_criteria
 from src.user_config.config_manager import ConfigManager
 
-def train_model(n, ppn, msg_size, collective, min_reps=5):
+def train_model(n, ppn, msg_size, collective, min_reps=5, dump_data=True, data_file=None):
   print(f"train_model: n={n}, ppn={ppn}, msg_size={msg_size}, collective={collective}, min_reps={min_reps}")
 
   #Preprocess the input values and generate the feature space
@@ -138,6 +138,11 @@ def train_model(n, ppn, msg_size, collective, min_reps=5):
   now = datetime.now()
   formatted_date_time = now.strftime("%Y-%m-%d %H:%M:%S")
   print("Ending training at: ", formatted_date_time, ", Elapsed Time (Seconds): ", elapsed_time)
+
+  if dump_data:
+      to_print = np.hstack((X_train, y_train[:, np.newaxis]))
+      np.savetxt(data_file, to_print, delimiter=',')
+
   return feature_space, rf
 
 
