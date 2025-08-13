@@ -151,7 +151,7 @@ def rules_to_dict(collective, rules, algs, ppn_in):
       msg_size = feature_set[2]
       rule_alg_str = algs[rules[feature_set_bytes]]
       alg_str, param_value = split_param_alg(rule_alg_str)
-      if collective == "Allgather" or collective == "Reduce_scatter":
+      if collective.lower() == "allgather" or collective.lower() == "allgatherv" or collective.lower() == "reduce_scatter":
         msg_size_str = "total_msg_size"
       else:
         msg_size_str = "avg_msg_size"

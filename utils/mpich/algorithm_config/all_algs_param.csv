@@ -74,7 +74,7 @@ iexscan,MPIR_Iexscan_intra_sched_recursive_doubling
 
 igather,MPIR_Igather_intra_sched_binomial
 
-allgatherv,MPIR_Allgatherv_intra_recursive_doubling,MPIR_Allgatherv_intra_ring,MPIR_Allgatherv_intra_brucks
+allgatherv,recursive_doubling,ring,brucks
 
 gather,binomial
 

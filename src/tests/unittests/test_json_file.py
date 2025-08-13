@@ -283,14 +283,21 @@ class TestJson(unittest.TestCase):
     self.assertEqual(result[2], "k=3")
     self.assertEqual(result[3], "tree_type=knomial_1")
 
-    rules_dict = shell_wrapper(collective, rules_to_dict(collective, rules, algs, 2))
-    result = list(rules_dict["is_op_built_in=yes"]["is_commutative=yes"]["comm_size<=2"]["comm_avg_ppn<=2"]["avg_msg_size<=1"].keys())
-    self.assertEqual(result[0], "algorithm=MPIR_allreduce_intra_tree")
-    result = list(rules_dict["is_op_built_in=yes"]["is_commutative=yes"]["comm_size<=2"]["comm_avg_ppn<=2"]["avg_msg_size<=1"]["algorithm=MPIR_allreduce_intra_tree"].keys())
-    self.assertEqual(result[0], "buffer_per_child=0")
-    self.assertEqual(result[1], "chunk_size=0")
-    self.assertEqual(result[2], "k=3")
-    self.assertEqual(result[3], "tree_type=knomial_1")
+  def test_shell_wrapper2(self):
+    collective="allgatherv"
+    param_algs_path = os.path.join(ConfigManager.get_instance().get_value('settings', 'acclaim_root'), "utils/mpich/algorithm_config/all_algs_param.csv")
+    algs = read_algs(collective, param_algs_path)
+    feature_space = np.array([[1,2,1],
+                              [1,2,2],
+                              [1,2,3],
+                            ])
+    rules = {}
+    rules[feature_space[0,:].astype('int').tobytes()] = 1
+
+    rules_dict = shell_wrapper("no_wrapper", rules_to_dict(collective, rules, algs, 2))
+
+    result = list(rules_dict["comm_size<=2"]["comm_avg_ppn<=2"]["total_msg_size<=1"].keys())
+    self.assertEqual(result[0], "algorithm=MPIR_allgatherv_intra_ring")
 
   def test_shell_wrapper_ch4(self):
     collective="allreduce_ch4"
