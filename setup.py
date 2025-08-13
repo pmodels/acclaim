@@ -74,7 +74,7 @@ parser.add_argument('--max_ppn', type=int, nargs='?',
 parser.add_argument('--num_initial_points', type=int, nargs='?', default=3,
                         help = '''The number of training points to collect in the first iteration. 
                         Increase for fewer algorithms, reduce for many algorithms. Default = 3''')
-parser.add_argument('--convergence_threshold', type=float, nargs='?', default=0.0000000015,
+parser.add_argument('--convergence_threshold', type=float, nargs='?', default=0.0000000001,
                         help = '''The threshold for maximum convergence value over four consecutive 
                         active learning iterations to successfully exit the active learning process. Default = .001.
                         Higher values will exit sooner with potentially less-accurate tuning. Lower values will take longer 
