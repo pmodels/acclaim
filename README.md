@@ -55,6 +55,8 @@ ACCLAiM includes 3 `make` commands to perform tuning:
 - **`gen_config_single`**: Tunes a single specified collective
 - **`gen_config_multiple`**: Tunes a list of specified collectives.
 - **`gen_config_all`**: Tunes all supported collectives. Note that this command is not recommended; instead, profile your application using a tool such as [mpiP](https://github.com/LLNL/mpiP) and only tune the most common collectives in your workload.
+- **`gen_data_single`**: Tunes a single specified collective and outputs the training data instead of the tuned .json file. This is a useful command if you wish to aggregate results across multiple jobs.
+- **`gen_config_from_data_single`**: Generates a tuned .json file from precollected data. It is the counterpart to **`gen_data_single`**.
 
 These commands have the following shared arguments:
 - **`N`**: Maximum number of nodes (i.e., number of nodes in the job).
